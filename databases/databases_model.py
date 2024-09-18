@@ -2,7 +2,7 @@ from mongoengine import Document, StringField
 
 from databases.mongo_model import MongodbClient
 from databases.mysql_model import MySQLConnection
-from databases.redis_model import RedisClient
+# from databases.redis_model import RedisClient
 
 
 class Databases(Document):
@@ -19,7 +19,8 @@ class Databases(Document):
                 target = self.name
             )
         elif self.database == 'redis':
-            return RedisClient(host=self.host, port=self.port, target=self.name)
+            print(f'Connecting to Redis at {self.host}:{self.port}:{self.name}')
+            # return RedisClient(host=self.host, port=self.port, collection=self.name)
         elif self.database == 'mongodb':
             return MongodbClient(host=self.host, port=self.port, target=self.name)
         else:
