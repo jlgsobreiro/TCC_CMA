@@ -7,3 +7,8 @@ class MongodbClient:
         self.db = self.client['test']
         self.collection = self.db[target]
 
+if __name__ == '__main__':
+    client = MongodbClient(target='test')
+    client.collection.insert_one({'key': 'value'})
+    assert (client.collection.find_one({'key': 'value'}).get('key')) == 'value'
+    client.client.close()
