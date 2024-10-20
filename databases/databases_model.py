@@ -2,6 +2,9 @@ from mongoengine import Document, StringField
 
 from databases.mongo_model import MongodbClient
 from databases.mysql_model import MySQLConnection
+from databases.redis_model import RedisClient
+
+
 # from databases.redis_model import RedisClient
 
 
@@ -16,11 +19,13 @@ class Databases(Document):
             return MySQLConnection(
                 host=self.host,
                 port=self.port,
-                target = self.name
+                target = self.name,
+                user='root',
+                password='rootpassword'
             )
         elif self.database == 'redis':
             print(f'Connecting to Redis at {self.host}:{self.port}:{self.name}')
-            # return RedisClient(host=self.host, port=self.port, collection=self.name)
+            return RedisClient(host=self.host, port=self.port, collection=self.name)
         elif self.database == 'mongodb':
             return MongodbClient(host=self.host, port=self.port, target=self.name)
         else:
