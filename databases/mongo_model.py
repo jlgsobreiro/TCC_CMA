@@ -7,6 +7,9 @@ class MongodbClient:
         self.db = self.client['test']
         self.collection = self.db[collection]
 
+    def filter(self, query: dict, project: list[str]=None):
+        return self.collection.find(filter=query, projection=project)
+
 if __name__ == '__main__':
     client = MongodbClient(collection='test')
     client.collection.insert_one({'key': 'value'})

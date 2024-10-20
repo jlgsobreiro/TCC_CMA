@@ -8,6 +8,12 @@ class RedisClient:
         print(f'Connecting to Redis at {host}:{port}')
         self.connection = Redis(host=self.host, port= self.port, db=self.collection)
 
+    def filter(self, query: dict, project: list[str]=None):
+        if not query:
+            return None
+        key = list(query.keys())[0]
+        return self.connection.get(key)
+
 
 if __name__ == '__main__':
     redis = RedisClient('localhost', 6379, 0)

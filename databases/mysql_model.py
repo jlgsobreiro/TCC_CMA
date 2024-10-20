@@ -8,6 +8,23 @@ class MysqlClient:
         self.table = target
         self.connection = pymysql.connect(host=host,port=port, user=user, password=password)
 
+    def filter(self, query: dict, project: list[str]=None):
+        if not query:
+            where = '1=1'
+        else:
+            where = ' AND '.join([f'{k}="{v}"' for k, v in query.items()])
+
+        if project:
+            columns = ', '.join(project)
+        else:
+            columns = '*'
+
+        query = f'SELECT {columns} FROM {self.table} WHERE {where}'
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+            return cursor.fetchall()
+
 
 if __name__ == '__main__':
     mysql = MysqlClient('localhost', 3306, 'test')
