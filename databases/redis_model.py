@@ -1,7 +1,7 @@
 from redis import Redis
 
 class RedisClient:
-    def __init__(self, host, port, collection):
+    def __init__(self, host="localhost", port=6379, collection=None):
         self.host = host
         self.port = port
         self.collection = collection

@@ -2,7 +2,7 @@ import pymysql
 
 
 class MySQLConnection:
-    def __init__(self, host, port, target, user=None, password=None):
+    def __init__(self, host='localhost', port=3306, target='test', user=None, password=None):
         self.host = host
         self.port = port
         self.table = target
