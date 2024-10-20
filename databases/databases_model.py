@@ -1,7 +1,7 @@
 from mongoengine import Document, StringField, connect, IntField
 
 from databases.mongo_model import MongodbClient
-from databases.mysql_model import MySQLConnection
+from databases.mysql_model import MysqlClient
 from databases.redis_model import RedisClient
 
 
@@ -16,7 +16,7 @@ class Databases(Document):
 
     def get_connection(self):
         if self.database == 'mysql':
-            return MySQLConnection(
+            return MysqlClient(
                 host=self.host,
                 port=self.port,
                 target = self.table,

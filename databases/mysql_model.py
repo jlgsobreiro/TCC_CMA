@@ -1,7 +1,7 @@
 import pymysql
 
 
-class MySQLConnection:
+class MysqlClient:
     def __init__(self, host='localhost', port=3306, target='test', user=None, password=None):
         self.host = host
         self.port = port
@@ -10,7 +10,7 @@ class MySQLConnection:
 
 
 if __name__ == '__main__':
-    mysql = MySQLConnection('localhost', 3306, 'test')
+    mysql = MysqlClient('localhost', 3306, 'test')
 
     with mysql.connection.cursor() as cursor:
         cursor.execute("CREATE DATABASE IF NOT EXISTS test;")

@@ -6,11 +6,11 @@ class RedisClient:
         self.port = port
         self.collection = collection
         print(f'Connecting to Redis at {host}:{port}')
-        self.connection = Redis(host=host, port=port, db=0)
+        self.connection = Redis(host=self.host, port= self.port, db=self.collection)
 
 
 if __name__ == '__main__':
-    redis = RedisClient('localhost', 6379, 'test')
+    redis = RedisClient('localhost', 6379, 0)
     redis.connection.set('key', 'value')
     assert redis.connection.get('key') == b'value'
     redis.connection.close()
