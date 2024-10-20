@@ -14,5 +14,8 @@ class QueryModel:
         if not self.target_database:
             return
         database_name, table_name = self.target_database.split('__')
-        db_found = Databases.objects(name=database_name).first()
+        db_found = Databases.objects(database=database_name).first()
+        if not db_found:
+            raise ValueError(f'Database {database_name} not found')
+        db_found.table = table_name
         return db_found.get_connection()
