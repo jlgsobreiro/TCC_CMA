@@ -41,7 +41,7 @@ class MyTestCase(unittest.TestCase):
         from query_model import QueryModel
         set_list = [('mysql__Teste1', 'mysql'), ('redis__Teste2', 'redis'), ('mongodb__Teste3', 'mongodb')]
         for target_database, target in set_list:
-            query = QueryModel(target_database=target_database)
+            query = QueryModel(target=target_database)
             self.assertEqual(query.database.__class__.__name__, f'{target.capitalize()}Client')
 
 
