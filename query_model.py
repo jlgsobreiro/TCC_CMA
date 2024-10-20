@@ -15,4 +15,4 @@ class QueryModel:
             return
         database_name, table_name = self.target_database.split('__')
         db_found = Databases.objects(name=database_name).first()
-        return db_found.instantiate()
+        return db_found.get_connection()
