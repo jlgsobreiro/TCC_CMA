@@ -12,7 +12,7 @@ class RedisClient:
         if not query:
             return None
         key = list(query.keys())[0]
-        return self.connection.get(key)
+        return {key: str(self.connection.get(key), encoding='utf-8')}
 
 
 if __name__ == '__main__':
