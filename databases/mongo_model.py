@@ -2,9 +2,9 @@ from pymongo import MongoClient
 
 
 class MongodbClient:
-    def __init__(self, host='localhost', port=27017, collection=None):
+    def __init__(self, host='localhost', port=27017, database='test_db' , collection=None):
         self.client = MongoClient(host, port)
-        self.db = self.client['test']
+        self.db = self.client[database]
         self.collection = self.db[collection]
 
     def filter(self, query: dict, project: list[str]=None):
