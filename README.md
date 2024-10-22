@@ -19,6 +19,7 @@ A proposta deste projeto é demonstrar consultas feitas em diferentes bancos de 
   }
 }
 ```
+
 Destrinchando essa request podemos observar a seguinte estrutura
 ```
 "tipo_de_banco__nome_do_banco__tabela": {
@@ -34,6 +35,7 @@ Destrinchando essa request podemos observar a seguinte estrutura
   }
 }
 ```
+
 "tipo_de_banco__nome_do_banco__tabela" se separado por "__" pode ser lido como
 ```
   "tipo_de_banco": Nome do serviço a ser utilizado ("mysql", "mongodb","redis")
@@ -42,6 +44,7 @@ Destrinchando essa request podemos observar a seguinte estrutura
   
   "tabela": Nome da tabela ou coleção a ser utilizada, para o Redis esta é opicional
 ```
+
 "filter": Recebe um dicionario com chaves e valores explicitos ou um dicionario com referencia à uma consulta feita anteriormente
 
 "alias": Nome da chave que conterá os resultados da consulta, se vazio é utilizado o "tipo_de_banco__nome_do_banco__tabela" como alias
@@ -64,3 +67,18 @@ Para se utilizar o resultado das pesqisas anteriores é feita da seguinte forma
 ...
 ```
 "campo1" recebe uma estrura com a referencia de qual consulta e qual campo quer ser passado como valor
+
+Para se iniciar o projeto utilize o comando
+```
+make up
+```
+
+Para se parar os containers do projeto utilize o comando
+```
+make down
+```
+
+Para executar os testes utilize o comando
+```
+make tests
+```
