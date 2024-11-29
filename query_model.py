@@ -34,7 +34,10 @@ class QueryModel:
         return db_found.get_connection()
 
     def filter_query(self):
-        return self.database.filter(self.filter, self.project)
+        query_result = self.database.filter(self.filter, self.project)
+        print(f'Query result: {query_result}')
+        return query_result
+
 
     def update_filter_from_previous_results_values(self):
         if not self.filter:

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:latest
+    image: mysql:8.3
     container_name: mysql_container
     environment:
       MYSQL_USER: root
@@ -29,18 +29,60 @@ services:
     volumes:
       - redis_data:/data
 
-  flask:
+  flask1:
     build: .
     container_name: flask_container
     image: flask_container
     ports:
       - "5000:5000"
+    environment:
+        - MESSAGE=Hello from Flask1
+        - DB=mysql
+        - DB_NAME=test_db
+        - DB_PARAMS=host=localhost,port=3306,user=root,password=rootpassword
     volumes:
       - .:/app
     depends_on:
       - mysql
       - mongodb
       - redis
+
+  flask2:
+    build: .
+    container_name: flask_container2
+    image: flask_container
+    ports:
+      - "5001:5000"
+    environment:
+        - MESSAGE=Hello from Flask2
+        - DB=mongodb
+        - DB_NAME=test_db
+        - DB_PARAMS=target=test,user=root,password=rootpassword
+    volumes:
+      - .:/app
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+
+  flask3:
+    build: .
+    container_name: flask_container3
+    image: flask_container
+    ports:
+      - "5002:5000"
+    environment:
+        - MESSAGE=Hello from Flask3
+        - DB=redis
+        - DB_NAME=0
+        - DB_PARAMS=host=localhost,port=6379
+    volumes:
+      - .:/app
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+
 
 volumes:
   mysql_data:

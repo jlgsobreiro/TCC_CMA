@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Item</title>
+</head>
+<body>
+    <h1>Update Item</h1>
+    <form action="/update/{{ item.id }}" method="post">
+        <input type="text" name="name" value="{{ item.name }}">
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>
