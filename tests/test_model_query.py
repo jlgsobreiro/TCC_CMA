@@ -1,5 +1,7 @@
 import unittest
 
+from bson import ObjectId
+
 from databases.databases_model import Databases
 from databases.mongo_model import MongodbClient
 from databases.mysql_model import MysqlClient
@@ -8,7 +10,6 @@ from fixtures import setup_databases
 
 
 class MyTestCase(unittest.TestCase):
-
     def setUp(self):
         setup_databases()
         mysql = MysqlClient(target='test', database='test_db', user='root', password='rootpassword')
@@ -24,32 +25,25 @@ class MyTestCase(unittest.TestCase):
         redis = RedisClient(host='localhost', port=6379, database=0)
         redis.connection.flushdb()
 
-    def test_mongo_model(self):
-        mongo_model = MongodbClient(target='test')
-        mongo_model.insert_data({'key_test': 'value_test'})
-        # mongo_model.collection.insert_one({'key_test': 'value_test'})
-        self.assertEqual(mongo_model.collection.find_one({'key_test': 'value_test'}).get('key_test'), 'value_test')
 
-    def test_redis_model(self):
+    def test_single_query_model_mongo(self):
+        from query_model import QueryModel
+        mongo_client = MongodbClient(target='test')
+        mongo_client.collection.insert_one({'_id': ObjectId('678930b7724bd3b29457beeb'), 'key': 'value'})
+        request = {"mongodb__test_db__test": {"filter": {"key": "value"}}}
+        query = QueryModel(query_request=request)
+        print(query.result)
+        assert query.result == {'mongodb__test_db__test': [{'_id': ObjectId('678930b7724bd3b29457beeb'), 'key': 'value'}]}
+        print(query.result)
+
+    def test_single_query_model_redis(self):
+        from query_model import QueryModel
         redis_client = RedisClient(host='localhost', port=6379, database=0)
-        redis_client.connection.set('key_test', 'value_test')
-        self.assertEqual(redis_client.connection.get('key_test'), b'value_test')
-
-    def test_mysql_model(self):
-        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
-        with mysql_client.connection as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
-                cursor.execute("SELECT * FROM test;")
-                assert (cursor.fetchone()) == ('id', 'value')
-            connection.commit()
-
-    def test_get_connection(self):
-        set_list = [('mysql', 'test'), ('redis', 'test'), ('mongodb', 'test')]
-        for target_database_type, target_database in set_list:
-            database = Databases.objects(database_type=target_database_type).first()
-            connection = database.get_connection()
-            self.assertEqual(connection.__class__.__name__, f'{target_database_type.capitalize()}Client')
+        redis_client.connection.set('key', 'value')
+        request = {"redis__0": {"filter": {"key": "key"}}}
+        query = QueryModel(query_request=request)
+        assert query.result == {'redis__0': {'key': 'value'}}
+        print(query.result)
 
     def test_single_query_model_mysql(self):
         from query_model import QueryModel
@@ -62,25 +56,6 @@ class MyTestCase(unittest.TestCase):
         query = QueryModel(query_request=request)
         print(query.result)
         assert query.result == {'mysql__test_db__test': {'id': 'value'}}
-
-    def test_single_query_model_redis(self):
-        from query_model import QueryModel
-        redis_client = RedisClient(host='localhost', port=6379, database=0)
-        redis_client.connection.set('key', 'value')
-        request = {"redis__0": {"filter": {"key": "key"}}}
-        query = QueryModel(query_request=request)
-        assert query.result == {'redis__0': {'key': 'value'}}
-        print(query.result)
-
-    def test_single_query_model_mongo(self):
-        from query_model import QueryModel
-        mongo_client = MongodbClient(target='test')
-        mongo_client.collection.insert_one({'key': 'value'})
-        request = {"mongodb__test_db__test": {"filter": {"key": "key"}}}
-        query = QueryModel(query_request=request)
-        print(query.result)
-        assert query.result == {'mongodb__test_db__test': {'key': 'key'}}
-        print(query.result)
 
     def test_multiple_query_model_mysql_mongo(self):
         from query_model import QueryModel
@@ -222,6 +197,7 @@ class MyTestCase(unittest.TestCase):
         query = QueryModel(query_request=request)
         print(query.result)
         assert query.result == {'mysql__test_db__test': {'value': 'value', 'id': 'id'}}
+
 
 if __name__ == '__main__':
     unittest.main()

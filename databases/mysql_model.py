@@ -10,20 +10,25 @@ class MysqlClient(DBInterface):
         self.table = target
         self.connection = self.connect(user, password, database)
 
-    def filter(self, query: dict, project: list[str]=None):
+    def get_data(self, query: list[dict] = None) -> list[dict]:
+        queries = []
         if not query:
-            where = '1=1'
+            queries.append(self.create_query(None))
         else:
-            where = ' AND '.join([f'{k}="{v}"' for k, v in query.items()])
-        columns = '*' if not project else ', '.join(project)
-        query = f'SELECT {columns} FROM {self.table} WHERE {where}'
+            for q in query:
+                queries.append(self.create_query(q))
+        query = ' UNION '.join(queries)
         print(f'Query: {query}')
 
         return self.execute_query(query)
 
-    def get_all(self):
-        query = f'SELECT * FROM {self.table}'
-        return self.execute_query(query)
+    def create_query(self, query):
+        if not query:
+            where = '1=1'
+        else:
+            where = ' AND '.join([f'{k}="{v}"' for k, v in query.items()])
+        query = f'SELECT * FROM {self.table} WHERE {where}'
+        return query
 
     def execute_query(self, query):
         with self.connection.cursor() as cursor:
@@ -36,7 +41,7 @@ class MysqlClient(DBInterface):
     def insert_data(self, data: dict):
         columns = ', '.join(data.keys())
         values = ', '.join([f'"{v}"' for v in data.values()])
-        query = f'INSERT INTO {self.table} VALUES ({values})'
+        query = f'INSERT INTO {self.table} ({columns}) VALUES ({values})'
         print(f'Query: {query}')
 
         with self.connection.cursor() as cursor:
@@ -78,9 +83,12 @@ if __name__ == '__main__':
         cursor.execute("CREATE TABLE IF NOT EXISTS teste (id VARCHAR(100), nome VARCHAR(100) NOT NULL);")
         cursor.execute("COMMIT;")
     mysql.insert_data({'id': 'id', 'nome': 'value'})
-    print(mysql.get_all())
-    filtered = mysql.filter({'id': 'id'})
+    mysql.insert_data({'id': 'id2', 'nome': 'value2'})
+    print(mysql.get_data())
+    filtered = mysql.get_data([{'id': 'id'}])
     print(filtered)
     assert filtered == [{'id': 'id', 'nome': 'value'}]
     mysql.delete_data({'id': 'id'})
+    mysql.delete_data({'id': 'id2'})
+    print(mysql.get_data())
     mysql.connection.close()

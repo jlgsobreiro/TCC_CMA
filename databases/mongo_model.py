@@ -17,8 +17,13 @@ class MongodbClient(DBInterface):
     def disconnect(self):
         self.connection.close()
 
-    def get_data(self, query):
-        return self.collection.find_one(query)
+    def get_data(self, query: list[dict] = None):
+        if not query:
+            return self.collection.find()
+        results = []
+        for q in query:
+            results.append(self.collection.find(q))
+        return results
 
     def insert_data(self, data):
         return self.collection.insert_one(data)
@@ -33,7 +38,7 @@ class MongodbClient(DBInterface):
         return self.collection.find()
 
     def filter(self, query: dict, project: list[str]=None):
-        return self.collection.find(filter=query, projection=project)
+        return [x for x in self.collection.find(filter=query, projection=project)]
 
 if __name__ == '__main__':
     client = MongodbClient(target='test')
