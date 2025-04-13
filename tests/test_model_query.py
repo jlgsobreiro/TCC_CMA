@@ -30,8 +30,14 @@ class MyTestCase(unittest.TestCase):
         from query_model import QueryModel
         mongo_client = MongodbClient(target='test')
         mongo_client.collection.insert_one({'_id': ObjectId('678930b7724bd3b29457beeb'), 'key': 'value'})
-        request = {"mongodb__test_db__test": {"filter": {"key": "value"}}}
+        request = {
+            "service": "mongodb",
+            "database": "test_db",
+            "schema": "test",
+            "filter": [{"key": "value"}]
+        }
         query = QueryModel(query_request=request)
+        query.execute_query()
         print(query.result)
         assert query.result == {'mongodb__test_db__test': [{'_id': ObjectId('678930b7724bd3b29457beeb'), 'key': 'value'}]}
         print(query.result)
@@ -40,9 +46,14 @@ class MyTestCase(unittest.TestCase):
         from query_model import QueryModel
         redis_client = RedisClient(host='localhost', port=6379, database=0)
         redis_client.connection.set('key', 'value')
-        request = {"redis__0": {"filter": {"key": "key"}}}
+        request = {
+            "service": "redis",
+            "database": "0",
+            "filter": [{"key": "value"}]
+        }
         query = QueryModel(query_request=request)
-        assert query.result == {'redis__0': {'key': 'value'}}
+        query.execute_query()
+        assert query.result == {'redis__0': [{'key': 'value'}]}
         print(query.result)
 
     def test_single_query_model_mysql(self):
@@ -52,10 +63,16 @@ class MyTestCase(unittest.TestCase):
             with connection.cursor() as cursor:
                 cursor.execute("INSERT INTO test VALUES ('id', 'value')")
             connection.commit()
-        request = {"mysql__test_db__test": {"filter": {"id": "id"}}}
+        request = {
+            "service": "mysql",
+            "database": "test_db",
+            "schema": "test",
+            "filter": [{"id": "id"}]
+        }
         query = QueryModel(query_request=request)
+        query.execute_query()
         print(query.result)
-        assert query.result == {'mysql__test_db__test': {'id': 'value'}}
+        assert query.result == {'mysql__test_db__test': [{'id':'id', 'value': 'value'}]}
 
     def test_multiple_query_model_mysql_mongo(self):
         from query_model import QueryModel
@@ -67,16 +84,19 @@ class MyTestCase(unittest.TestCase):
         mongo_client = MongodbClient(target='test', database='test_db')
         mongo_client.collection.insert_one({'id': 'value'})
         request = {
-            "mysql__test_db__test": {
-                "filter": {"id": "id"},
-                "on_result": {
-                    "mongodb__test_db__test": {
-                        "filter": {"id": {"mysql__test_db__test": "id"}}
-                    }
-                }
+            "service": "mysql",
+            "database": "test_db",
+            "schema": "test",
+            "filter": [{"id": "id"}],
+            "on_result": {
+                "service": "mongodb",
+                "database": "test_db",
+                "schema": "test",
+                "filter": [{"id": {"mysql__test_db__test": "id"}}]
             }
         }
         query = QueryModel(query_request=request)
+        query.execute_query()
         assert query.result == {'mysql__test_db__test': {'id': 'value'}, 'mongodb__test_db__test': {'_id': 'id'}}
         print(query.result)
 

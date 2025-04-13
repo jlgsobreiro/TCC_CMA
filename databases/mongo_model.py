@@ -17,12 +17,22 @@ class MongodbClient(DBInterface):
     def disconnect(self):
         self.connection.close()
 
-    def get_data(self, query: list[dict] = None):
+    def get_data(self, **kwargs) -> list[dict]:
+        query = kwargs.get('query')
         if not query:
             return self.collection.find()
         results = []
         for q in query:
-            results.append(self.collection.find(q))
+            if isinstance(q, dict):
+                results.append(self.collection.find(q).next())
+            elif isinstance(q, list):
+                for sub_q in q:
+                    if isinstance(sub_q, dict):
+                        results.append(self.collection.find(sub_q).next())
+                    else:
+                        raise ValueError(f'Invalid query type: {type(sub_q)}')
+            else:
+                raise ValueError(f'Invalid query type: {type(q)}')
         return results
 
     def insert_data(self, data):

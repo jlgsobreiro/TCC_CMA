@@ -23,7 +23,8 @@ class RedisClient(DBInterface):
             self.connection.close()
             print('Disconnected from Redis')
 
-    def get_data(self, query: list[dict] = None) -> list[dict]:
+    def get_data(self, **kwargs) -> list[dict]:
+        query = kwargs.get('query')
         try:
             if not query:
                 keys = self.connection.keys()

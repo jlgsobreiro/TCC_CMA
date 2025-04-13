@@ -1,3 +1,5 @@
+from django.db.models.expressions import result
+
 from databases.database_interface import DBInterface
 from databases.databases_model import Databases
 
@@ -34,12 +36,14 @@ class QueryModel:
         self.target_table: str = self.request.get('schema') or None
         self.database = None
         self.filter: dict = self.request.get('filter')
-        self.alias: str = self.request.get('alias')
+        alter_alias = '__'.join([x for x in [self.target_database_type,self.target_database,self.target_table] if x])
+        self.alias: str = self.request.get('alias') or alter_alias
         self.project: list = self.request.get('project')
         self.result = None
         self.on_result = self.request.get('on_result')
         self.next_query = None
         self.previous_result = previous_result
+        self.vars = self.VarsSingleton()
 
     def execute_query(self):
         self.database: DBInterface = self.get_database()
@@ -48,6 +52,8 @@ class QueryModel:
             self.update_filter_from_previous_results_values()
 
         self.result = {self.alias: self.filter_query()}
+        if self.result:
+            self.vars.set(self.alias, self.result)
 
         if self.previous_result:
             self.result.update(self.previous_result)
@@ -56,6 +62,7 @@ class QueryModel:
             self.next_query: QueryModel = QueryModel(self.request.get('on_result'), self.result)
 
         if self.next_query:
+            self.next_query.execute_query()
             self.result.update(self.next_query.result)
 
     def get_database(self):
@@ -66,10 +73,10 @@ class QueryModel:
             raise ValueError(f'{self.target_database_type.capitalize()} database {self.target_database} not found')
         db_found.database = self.target_database
         db_found.table = self.target_table
-        return db_found.connect()
+        return db_found.get_connection()
 
     def filter_query(self):
-        query_result = self.database.filter(self.filter, self.project)
+        query_result = self.database.get_data(query=self.filter, project=self.project)
         print(f'Query result: {query_result}')
         return query_result
 
@@ -87,3 +94,21 @@ class QueryModel:
                         self.filter[key] = result.get(prev_key).get(prev_field)
                 else:
                     self.filter[key] = self.previous_result.get(prev_key).get(prev_field)
+
+    class VarsSingleton:
+        _instance = None
+
+        def __new__(cls, *args, **kwargs):
+            if not cls._instance:
+                cls._instance = super(VarsSingleton, cls).__new__(cls, *args, **kwargs)
+            return cls._instance
+
+        def __init__(self):
+            if not hasattr(self, 'vars'):
+                self.vars = {}
+
+        def get(self, key):
+            return self.vars.get(key)
+
+        def set(self, key, value):
+            self.vars[key] = value

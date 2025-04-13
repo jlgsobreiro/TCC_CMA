@@ -10,7 +10,8 @@ class MysqlClient(DBInterface):
         self.table = target
         self.connection = self.connect(user, password, database)
 
-    def get_data(self, query: list[dict] = None) -> list[dict]:
+    def get_data(self, **kwargs) -> list[dict]:
+        query = kwargs.get('query')
         queries = []
         if not query:
             queries.append(self.create_query(None))
