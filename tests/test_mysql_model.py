@@ -26,5 +26,31 @@ class MyTestCase(unittest.TestCase):
                 assert (cursor.fetchone()) == ('id', 'value')
             connection.commit()
 
+    def test_mysql_model_get_data(self):
+        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
+        with mysql_client.connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
+                cursor.execute("SELECT * FROM test;")
+            connection.commit()
+            result = mysql_client.get_data()
+            assert result == [{'id': 'id', 'value': 'value'}]
+
+    def test_mysql_model_get_data_many_rows(self):
+        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
+        with mysql_client.connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
+                cursor.execute("INSERT INTO test VALUES ('id2', 'value2')")
+                cursor.execute("INSERT INTO test VALUES ('id3', 'value3')")
+                cursor.execute("SELECT * FROM test;")
+            connection.commit()
+            result = mysql_client.get_data()
+            assert result == [
+                {'id': 'id', 'value': 'value'},
+                {'id': 'id2', 'value': 'value2'},
+                {'id': 'id3', 'value': 'value3'}
+            ]
+
 if __name__ == '__main__':
     unittest.main()
