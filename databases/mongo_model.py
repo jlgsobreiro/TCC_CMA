@@ -1,4 +1,7 @@
+from typing import Any, Mapping
+
 from pymongo import MongoClient
+from pymongo.cursor import Cursor
 
 from databases.database_interface import DBInterface
 
@@ -17,22 +20,24 @@ class MongodbClient(DBInterface):
     def disconnect(self):
         self.connection.close()
 
-    def get_data(self, **kwargs) -> list[dict]:
+    def get_data(self, **kwargs) -> Cursor[Mapping[str, Any] | Any] | list[Any]:
         query = kwargs.get('query')
-        if not query:
-            return self.collection.find()
         results = []
-        for q in query:
-            if isinstance(q, dict):
-                results.append(self.collection.find(q).next())
-            elif isinstance(q, list):
-                for sub_q in q:
-                    if isinstance(sub_q, dict):
-                        results.append(self.collection.find(sub_q).next())
-                    else:
-                        raise ValueError(f'Invalid query type: {type(sub_q)}')
-            else:
-                raise ValueError(f'Invalid query type: {type(q)}')
+        if not query:
+            res = [x for x in self.collection.find()]
+            results.extend(res)
+        else:
+            for q in query:
+                if isinstance(q, dict):
+                    results.extend([x for x in self.collection.find(q)])
+                elif isinstance(q, list):
+                    for sub_q in q:
+                        if isinstance(sub_q, dict):
+                            results.extend([x for x in self.collection.find(sub_q)])
+                        else:
+                            raise ValueError(f'Invalid query type: {type(sub_q)}')
+                else:
+                    raise ValueError(f'Invalid query type: {type(q)}')
         return results
 
     def insert_data(self, data):
