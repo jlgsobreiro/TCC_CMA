@@ -202,28 +202,35 @@ class MyTestCase(unittest.TestCase):
         redis_client = RedisClient(host='localhost', port=6379, database=0)
         redis_client.connection.set('key', 'value')
         mongo_client = MongodbClient(target='test')
-        mongo_client.collection.insert_one({'key': 'value'})
+        inserted = mongo_client.collection.insert_one({'key': 'value'})
         request = {
-            "mongodb__test_db__test": {
-                "filter": {"key": "value"},
-                "alias" : "mongo",
+            "service": "mongodb",
+            "database": "test_db",
+            "schema": "test",
+            "alias": "mongodb",
+            "filter": [{"key": "value"}],
+            "on_result": {
+                "service": "redis",
+                "database": "0",
+                "alias": "redis",
+                "filter": [{"key": {"mongodb": "key"}}],
                 "on_result": {
-                    "redis__0": {
-                        "filter": {"key": {"mongo": "key"}},
-                        "alias" : "redis",
-                        "on_result": {
-                            "mysql__test_db__test": {
-                                "filter": {"value": {"redis": "key"}},
-                                "alias" : "mysql"
-                            }
-                        }
-                    }
+                    "service": "mysql",
+                    "database": "test_db",
+                    "schema": "test",
+                    "alias": "mysql",
+                    "filter": [{"value": {"redis": "key"}}]
                 }
             }
         }
         query = QueryModel(query_request=request)
+        query.execute_query()
         print(query.result)
-        assert query.result == {'mongo': {'_id': 'key'}, 'redis': {'key': 'value'}, 'mysql': {'id': 'value'}}
+        assert query.result == {
+            'mongodb': [{'_id': inserted.inserted_id, 'key': 'value'}],
+            'redis': [{'key': 'value'}],
+            'mysql': [{'id': 'id', 'value': 'value'}]
+        }
 
     def test_single_query_model_mysql_with_project(self):
         from query_model import QueryModel
