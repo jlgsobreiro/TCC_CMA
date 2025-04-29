@@ -251,6 +251,26 @@ class MyTestCase(unittest.TestCase):
         print(query.result)
         assert query.result == {'mysql__test_db__test': [{'value': 'value'}]}
 
+    def test_single_query_model_mysql_with_project_and_alias(self):
+        from query_model import QueryModel
+        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
+        with mysql_client.connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
+            connection.commit()
+        request = {
+            "service": "mysql",
+            "database": "test_db",
+            "schema": "test",
+            "project": ["value"],
+            "alias": "mysql",
+            "filter": [{"id": "id"}]
+        }
+        query = QueryModel(query_request=request)
+        query.execute_query()
+        print(query.result)
+        assert query.result == {'mysql': [{'value': 'value'}]}
+
 
 if __name__ == '__main__':
     unittest.main()
