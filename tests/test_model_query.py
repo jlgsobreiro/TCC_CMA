@@ -76,18 +76,14 @@ class MyTestCase(unittest.TestCase):
 
     def test_multiple_query_model_mysql_mongo(self):
         from query_model import QueryModel
-        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
-        with mysql_client.connection as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
-            connection.commit()
         mongo_client = MongodbClient(target='test', database='test_db')
-        mongo_client.collection.insert_one({'id': 'value'})
+        inserted = mongo_client.collection.insert_one({'id': 'id2'})
+        mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
         request = {
             "service": "mysql",
             "database": "test_db",
             "schema": "test",
-            "filter": [{"id": "id"}],
+            "filter": [{"id": "id2"}],
             "on_result": {
                 "service": "mongodb",
                 "database": "test_db",
@@ -96,9 +92,21 @@ class MyTestCase(unittest.TestCase):
             }
         }
         query = QueryModel(query_request=request)
-        query.execute_query()
-        assert query.result == {'mysql__test_db__test': {'id': 'value'}, 'mongodb__test_db__test': {'_id': 'id'}}
-        print(query.result)
+        with mysql_client.connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test VALUES ('id2', 'value2')")
+            connection.commit()
+            query.execute_query()
+
+            print(query.result)
+            expexted = {
+                'mysql__test_db__test':
+                    [{'id': 'id2', 'value': 'value2'}],
+                'mongodb__test_db__test': [
+                    {'_id': inserted.inserted_id, 'id': 'id2'}
+                ]
+            }
+            assert query.result == expexted
 
     def test_multiple_query_model_redis_mongo(self):
         from query_model import QueryModel
