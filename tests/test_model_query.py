@@ -140,18 +140,20 @@ class MyTestCase(unittest.TestCase):
                 cursor.execute("INSERT INTO test VALUES ('id', 'value')")
             connection.commit()
         request = {
-            "redis__0": {
-                "filter": {"key": "key"},
-                "on_result": {
-                    "mysql__test_db__test": {
-                        "filter": {"value": {"redis__0": "key"}}
-                    }
-                }
+            "service": "redis",
+            "database": "0",
+            "filter": [{"key": "key"}],
+            "on_result": {
+                "service": "mysql",
+                "database": "test_db",
+                "schema": "test",
+                "filter": [{"value": {"redis__0": "key"}}]
             }
         }
         query = QueryModel(query_request=request)
+        query.execute_query()
         print(query.result)
-        assert query.result == {'redis__0': {'key': 'value'}, 'mysql__test_db__test': {'id': 'value'}}
+        assert query.result == {'redis__0': [{'key': 'value'}], 'mysql__test_db__test': [{'id': 'id', 'value': 'value'}]}
 
     def test_multiple_query_model_mongo_redis_mysql(self):
         from query_model import QueryModel
