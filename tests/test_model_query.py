@@ -239,10 +239,17 @@ class MyTestCase(unittest.TestCase):
             with connection.cursor() as cursor:
                 cursor.execute("INSERT INTO test VALUES ('id', 'value')")
             connection.commit()
-        request = {"mysql__test_db__test": {"filter": {"id": "id"}, "project": ["value", "id"]}}
+        request = {
+            "service": "mysql",
+            "database": "test_db",
+            "schema": "test",
+            "project": ["value"],
+            "filter": [{"id": "id"}]
+        }
         query = QueryModel(query_request=request)
+        query.execute_query()
         print(query.result)
-        assert query.result == {'mysql__test_db__test': {'value': 'value', 'id': 'id'}}
+        assert query.result == {'mysql__test_db__test': [{'value': 'value'}]}
 
 
 if __name__ == '__main__':
