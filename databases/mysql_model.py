@@ -12,23 +12,30 @@ class MysqlClient(DBInterface):
 
     def get_data(self, **kwargs) -> list[dict]:
         query = kwargs.get('query')
+        project = kwargs.get('project')
         queries = []
         if not query:
             queries.append(self.create_query(None))
         else:
             for q in query:
-                queries.append(self.create_query(q))
+                queries.append(self.create_query(q, project))
         query = ' UNION '.join(queries)
         print(f'Query: {query}')
 
         return self.execute_query(query)
 
-    def create_query(self, query):
+    def create_query(self, query, project: list=None):
+        if project:
+            project = ', '.join(project)
+        else:
+            project = '*'
+
         if not query:
             where = '1=1'
         else:
             where = ' AND '.join([f'{k}="{v}"' for k, v in query.items()])
-        query = f'SELECT * FROM {self.table} WHERE {where}'
+
+        query = f'SELECT {project} FROM {self.table} WHERE {where}'
         return query
 
     def execute_query(self, query):
