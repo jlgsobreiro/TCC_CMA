@@ -3,6 +3,23 @@ from django.db.models.expressions import result
 from databases.database_interface import DBInterface
 from databases.databases_model import Databases
 
+class VarsSingleton:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(VarsSingleton, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self):
+        if not hasattr(self, 'vars'):
+            self.vars = {}
+
+    def get(self, key):
+        return self.vars.get(key)
+
+    def set(self, key, value):
+        self.vars[key] = value
 
 class QueryModel:
     """
@@ -43,7 +60,7 @@ class QueryModel:
         self.on_result = self.request.get('on_result')
         self.next_query = None
         self.previous_result = previous_result
-        self.vars = self.VarsSingleton()
+        self.vars = VarsSingleton()
 
     def execute_query(self):
         self.database: DBInterface = self.get_database()
@@ -59,11 +76,50 @@ class QueryModel:
             self.result.update(self.previous_result)
 
         if self.request.get('on_result'):
-            self.next_query: QueryModel = QueryModel(self.request.get('on_result'), self.result)
+            self.next_query = []
 
-        if self.next_query:
-            self.next_query.execute_query()
-            self.result.update(self.next_query.result)
+            # Itera sobre cada item em self.result para executar consultas adicionais
+            for item in self.result.get(self.alias, []):
+                # Atualiza o filtro da próxima consulta com base no item atual
+                next_request = self.request.get('on_result').copy()
+                next_request['filter'] = self._update_filter_with_item(next_request.get('filter'), item)
+
+                # Cria uma nova instância de QueryModel para cada item
+                next_query = QueryModel(next_request, self.result)
+                self.next_query.append(next_query)
+
+            # Executa todas as consultas encadeadas
+            for query in self.next_query:
+                query.execute_query()
+                self.result.update(query.result)
+
+    def _update_filter_with_item(self, filter_dict, item):
+        if not filter_dict:
+            return {}
+        updated_filter = {}
+        for itens in filter_dict:
+            if isinstance(itens, dict):
+                for key, value in itens.items():
+                    if isinstance(value, dict):
+                        for sub_key, sub_value in value.items():
+                            if sub_key in item:
+                                updated_filter[key] = item[sub_key]
+                            else:
+                                updated_filter[key] = self.vars.get(sub_key)[sub_key][0][sub_value]
+                    else:
+                        updated_filter[key] = value
+            else:
+                updated_filter[itens] = item.get(itens)
+        # for key, value in filter_dict.items():
+        #     if isinstance(value, dict):
+        #         for sub_key, sub_value in value.items():
+        #             if sub_key in item:
+        #                 updated_filter[key] = item[sub_key]
+        #             else:
+        #                 updated_filter[key] = sub_value
+        #     else:
+        #         updated_filter[key] = value
+        return updated_filter
 
     def get_database(self):
         if not self.target_database_type:
@@ -76,6 +132,8 @@ class QueryModel:
         return db_found.get_connection()
 
     def filter_query(self):
+        if isinstance(self.filter, dict):
+            self.filter = [self.filter]
         query_result = self.database.get_data(query=self.filter, project=self.project)
         print(f'Query result: {query_result}')
         return query_result
@@ -94,21 +152,3 @@ class QueryModel:
                         self.filter[key] = result.get(prev_key).get(prev_field)
                 else:
                     self.filter[key] = self.previous_result.get(prev_key).get(prev_field)
-
-    class VarsSingleton:
-        _instance = None
-
-        def __new__(cls, *args, **kwargs):
-            if not cls._instance:
-                cls._instance = super(VarsSingleton, cls).__new__(cls, *args, **kwargs)
-            return cls._instance
-
-        def __init__(self):
-            if not hasattr(self, 'vars'):
-                self.vars = {}
-
-        def get(self, key):
-            return self.vars.get(key)
-
-        def set(self, key, value):
-            self.vars[key] = value
