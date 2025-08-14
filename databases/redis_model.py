@@ -28,13 +28,16 @@ class RedisClient(DBInterface):
         try:
             if not query:
                 keys = self.connection.keys()
-                return [{key.decode('utf-8'): self.connection.get(key).decode('utf-8')} for key in keys]
+                return [
+                    {'id': key.decode('utf-8'), 'value': self.connection.get(key).decode('utf-8')}
+                    for key in keys
+                ]
             result = []
             for q in query:
-                key = list(q.keys())[0]
+                key = list(q.values())[0]
                 value = self.connection.get(key)
                 if value:
-                    result.append({key: value.decode('utf-8')})
+                    result.append({'id': key, 'value': value.decode('utf-8')})
             return result
         except redis.RedisError as e:
             print(f'Error getting data: {e}')
@@ -42,9 +45,10 @@ class RedisClient(DBInterface):
 
     def insert_data(self, data: dict) -> list[dict]:
         key, value = list(data.items())[0]
+        key = str(len(self.get_all()))
         try:
             self.connection.set(key, value)
-            return [{key: value}]
+            return [{'id': key, 'value': value}]
         except redis.RedisError as e:
             print(f'Error inserting data: {e}')
             return []
@@ -53,7 +57,7 @@ class RedisClient(DBInterface):
         key = list(query.keys())[0]
         try:
             result = self.connection.delete(key)
-            return [{key: result}]
+            return [{'id': key, 'deleted': bool(result)}]
         except redis.RedisError as e:
             print(f'Error deleting data: {e}')
             return []
@@ -63,10 +67,44 @@ class RedisClient(DBInterface):
         value = list(data.values())[0]
         try:
             self.connection.set(key, value)
-            return [{key: value}]
+            return [{'id': key, 'value': value}]
         except redis.RedisError as e:
             print(f'Error updating data: {e}')
             return []
+
+    def get_all(self) -> list[dict]:
+        try:
+            keys = self.connection.keys()
+            return [
+                {'id': key.decode('utf-8'), 'value': self.connection.get(key).decode('utf-8')}
+                for key in keys
+            ]
+        except redis.RedisError as e:
+            print(f'Error getting all data: {e}')
+            return []
+
+    def delete_data_by_id(self, target_id: str) -> dict:
+        try:
+            result = self.connection.delete(target_id)
+            return {'id': target_id, 'deleted': bool(result)}
+        except redis.RedisError as e:
+            print(f'Error deleting data by id: {e}')
+            return {'id': target_id, 'deleted': False, 'error': str(e)}
+
+    def get_data_by_id(self, target_id: str) -> dict:
+        value = self.connection.get(target_id)
+        if value:
+            return {'id': target_id, 'value': value.decode('utf-8')}
+        return {'id': target_id, 'value': None}
+
+    def update_data_by_id(self, target_id: str, data: dict) -> dict:
+        try:
+            value = list(data.values())[0]
+            self.connection.set(target_id, value)
+            return {'id': target_id, 'value': value}
+        except redis.RedisError as e:
+            print(f'Error updating data by id: {e}')
+            return {'id': target_id, 'error': str(e)}
 
 
 if __name__ == '__main__':

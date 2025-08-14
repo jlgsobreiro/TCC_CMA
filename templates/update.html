@@ -3,12 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <title>Update Item</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Update Item</h1>
-    <form action="/update/{{ item.id }}" method="post">
-        <input type="text" name="name" value="{{ item.name }}">
-        <button type="submit">Update</button>
-    </form>
+    <div class="container">
+        <h1>Atualizar Item</h1>
+        <form action="/crud/{{ database_type }}/update/{{ target_id }}" method="post">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" name="name" value="{{ item.name }}">
+            <button type="submit">Atualizar</button>
+        </form>
+    </div>
 </body>
 </html>

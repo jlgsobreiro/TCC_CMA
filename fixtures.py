@@ -6,7 +6,7 @@ def setup_databases():
     Databases.drop_collection()
     db1 = Databases(
         database_type='mysql',
-        database='test_db',
+        database='',
         params={
             'host': 'localhost',
             'port': 3306,
@@ -27,7 +27,7 @@ def setup_databases():
 
 
 def create_mysql_fixtures():
-    db1 = find_database({'database_type': 'mysql', 'database': 'test_db'})
+    db1 = find_database({'database_type': 'mysql'})
     mysql_client: MysqlClient = db1.get_connection()
     with mysql_client.connection as connection:
         with connection.cursor() as cursor:
@@ -35,9 +35,9 @@ def create_mysql_fixtures():
             cursor.execute('USE test_db')
             cursor.execute('CREATE TABLE IF NOT EXISTS test (id VARCHAR(255), value VARCHAR(255))')
         connection.commit()
-    mysql_client.insert_data({'id': '1', 'value': 'value'})
-    mysql_client.insert_data({'id': '2', 'value': 'value2'})
-    mysql_client.insert_data({'id': '3', 'value': 'value3'})
+        mysql_client.insert_data({'id': '1', 'value': 'value'})
+        mysql_client.insert_data({'id': '2', 'value': 'value2'})
+        mysql_client.insert_data({'id': '3', 'value': 'value3'})
 
 
 def create_redis_fixtures():

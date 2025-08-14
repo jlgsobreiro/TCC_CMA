@@ -4,7 +4,7 @@ from databases.database_interface import DBInterface
 
 
 class MysqlClient(DBInterface):
-    def __init__(self,database='test_db', host='localhost', port=3306, target='test', user=None, password=None):
+    def __init__(self,database='test', host='localhost', port=3306, target='test', user="root", password="rootpassword"):
         self.host = host
         self.port = int(port)
         self.table = target
@@ -33,7 +33,7 @@ class MysqlClient(DBInterface):
         if not query:
             where = '1=1'
         else:
-            where = ' AND '.join([f'{k}="{v}"' for k, v in query.items()])
+            where = ' AND '.join([f"{k}='{v}'" for k, v in query.items()])
 
         query = f'SELECT {project} FROM {self.table} WHERE {where}'
         return query
@@ -52,8 +52,8 @@ class MysqlClient(DBInterface):
         query = f'INSERT INTO {self.table} ({columns}) VALUES ({values})'
         print(f'Query: {query}')
 
-        with self.connection.cursor() as cursor:
-            cursor.execute(query)
+        with self.connection.cursor() as cur:
+            cur.execute(query)
             self.connection.commit()
 
     def update_data(self, query: dict, data: dict):
@@ -76,11 +76,36 @@ class MysqlClient(DBInterface):
             self.connection.commit()
 
     def disconnect(self):
-        self.connection.close()
+        if self.connection:
+            self.connection.close()
+            self.connection = None
 
     def connect(self, user, password, database):
-        self.connection = pymysql.connect(host=self.host,port=self.port, user=user, password=password, database=database)
-        return self.connection
+        return pymysql.connect(host=self.host, port=self.port, user=user, password=password, database=database)
+
+    def get_all(self) -> list[dict]:
+        query = f'SELECT * FROM {self.table}'
+        return self.execute_query(query)
+
+    def delete_data_by_id(self, target_id: str):
+        query = f'DELETE FROM {self.table} WHERE id="{target_id}"'
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+            self.connection.commit()
+            return cursor.rowcount > 0
+
+    def get_data_by_id(self, target_id: str):
+        query = f'SELECT * FROM {self.table} WHERE id="{target_id}"'
+        result = self.execute_query(query)
+        return result[0] if result else None
+
+    def update_data_by_id(self, target_id: str, data: dict):
+        set_clause = ', '.join([f'{k}="{v}"' for k, v in data.items()])
+        query = f'UPDATE {self.table} SET {set_clause} WHERE id="{target_id}"'
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+            self.connection.commit()
+            return cursor.rowcount > 0
 
 if __name__ == '__main__':
     mysql = MysqlClient(host='localhost', port=3306, target='teste', database='test_db', user='root', password='rootpassword')

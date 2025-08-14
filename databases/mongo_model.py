@@ -1,5 +1,6 @@
 from typing import Any, Mapping
 
+from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
@@ -49,11 +50,20 @@ class MongodbClient(DBInterface):
     def delete_data(self, query):
         return self.collection.delete_one(query)
 
+    def delete_data_by_id(self, target_id: str):
+        return self.collection.delete_one({'_id': ObjectId(target_id)})
+
     def get_all(self):
         return self.collection.find()
 
     def filter(self, query: dict, project: list[str]=None):
         return [x for x in self.collection.find(filter=query, projection=project)]
+
+    def get_data_by_id(self, target_id: str):
+        return self.collection.find_one({'_id': ObjectId(target_id)})
+
+    def update_data_by_id(self, target_id: str, data: dict):
+        return self.collection.update_one({'_id': ObjectId(target_id)}, {'$set': data})
 
 if __name__ == '__main__':
     client = MongodbClient(target='test')

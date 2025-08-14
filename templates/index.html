@@ -3,21 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <title>CRUD Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #f1f1f1;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .actions a {
+            margin-left: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>Items</h1>
-    <form action="/add" method="post">
-        <input type="text" name="name" placeholder="Add new item">
-        <button type="submit">Add</button>
-    </form>
-    <ul>
-        {% for item in items %}
-            <li>
-                {{ item.id }}
-                <a href="/update/{{ item.id }}">Update</a>
-                <a href="/delete/{{ item.id }}">Delete</a>
-            </li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h1>Items</h1>
+        <form action="/crud/{{ database_type }}/add" method="post">
+            <input type="text" name="name" placeholder="Add new item">
+            <button type="submit">Add</button>
+        </form>
+        <ul>
+            {% for item in items %}
+                <li>
+                    <span>{{ item.id }}</span>
+                    <span class="actions">
+                        <form action="/crud/{{ database_type }}/update/{{ item.id }}" method="get" style="display:inline;">
+                            <button type="submit">Update</button>
+                        </form>
+                        <form action="/crud/{{ database_type }}/delete/{{ item.id }}" method="post" style="display:inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>
