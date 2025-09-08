@@ -42,7 +42,7 @@
         </form>
         {% if result %}
             <h2>Resultado:</h2>
-            <pre>{{ result }}</pre>
+            <textarea id="query" name="query" required wrap="soft">{{ result }}</textarea>
         {% endif %}
         {% if error %}
             <pre style="color: red;">{{ error }}</pre>

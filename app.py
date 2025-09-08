@@ -1,4 +1,5 @@
 from os import getenv
+from bson import ObjectId
 
 from flask import Flask, request, render_template, redirect, url_for
 
@@ -6,6 +7,16 @@ from databases.databases_model import Databases
 from query_model import QueryModel
 
 app = Flask(__name__)
+
+
+def convert_objectid(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, list):
+        return [convert_objectid(item) for item in obj]
+    if isinstance(obj, dict):
+        return {k: convert_objectid(v) for k, v in obj.items()}
+    return obj
 
 
 @app.route('/')
@@ -78,9 +89,10 @@ def delete_item_by_type(database_type, target_id):
 
 @app.route('/crud/<database_type>/add', methods=['POST'])
 def add_item_by_type(database_type):
-    name = request.form.get('name')
+    item_id = request.form.get('id')
+    external_id = request.form.get('external_id')
     conn = get_connection_by_type(database_type)
-    conn.insert_data({"id": name})
+    conn.insert_data({"id": item_id, "external_id": external_id})
     return redirect(f"/crud/{database_type}")
 
 
@@ -103,10 +115,26 @@ def query_data():
             try:
                 parsed_query = QueryModel(query_request=request_dict)
                 parsed_query.execute_query()
-                return render_template('query.html', result=parsed_query.result)
+                result = convert_objectid(parsed_query.result)
+                return render_template('query.html', result=json.dumps(result, indent=2, ensure_ascii=False))
             except json.JSONDecodeError as e:
                 return f"Invalid JSON query: {e}", 400
     return render_template('query.html')
+
+@app.route('/api/query', methods=['GET', 'POST'])
+def api_query_data():
+    if request.method == 'POST':
+        import json
+        request_dict = request.get_json()
+        if request_dict is not None:
+            try:
+                parsed_query = QueryModel(query_request=request_dict)
+                parsed_query.execute_query()
+                result = convert_objectid(parsed_query.result)
+                return json.dumps({"result": result})
+            except json.JSONDecodeError as e:
+                return json.dumps({"error": f"Invalid JSON query: {e}"}), 400
+    return {"error": "Invalid request method"}, 400
 
 
 if __name__ == '__main__':

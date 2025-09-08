@@ -44,8 +44,8 @@ class RedisClient(DBInterface):
             return []
 
     def insert_data(self, data: dict) -> list[dict]:
-        key, value = list(data.items())[0]
-        key = str(len(self.get_all()))
+        key = data.get('id')
+        value = data.get('external_id')
         try:
             self.connection.set(key, value)
             return [{'id': key, 'value': value}]
