@@ -49,11 +49,11 @@ class MyTestCase(unittest.TestCase):
         request = {
             "service": "redis",
             "database": "0",
-            "filter": [{"key": "value"}]
+            "filter": [{"key": "key"}]
         }
         query = QueryModel(query_request=request)
         query.execute_query()
-        assert query.result == {'redis__0': [{'key': 'value'}]}
+        assert query.result == {'redis__0': [{'id': 'key', 'value': 'value'}]}
         print(query.result)
 
     def test_single_query_model_mysql(self):
@@ -122,14 +122,23 @@ class MyTestCase(unittest.TestCase):
                 "service": "mongodb",
                 "database": "test_db",
                 "schema": "test",
-                "filter": [{"key": {"redis__0": "key"}}]
+                "filter": [{"key": {"redis__0": "value"}}]
             }
         }
         query = QueryModel(query_request=request)
         query.execute_query()
         print(query.result)
-        assert query.result == {'redis__0': [{'key': 'value'}],
-                                'mongodb__test_db__test': [{'_id': inserted.inserted_id, 'key': 'value'}]}
+        assert (
+            query.result ==
+                {
+                    'redis__0': [
+                        {'id': 'key', 'value': 'value'}
+                    ],
+                    'mongodb__test_db__test': [
+                        {'_id': inserted.inserted_id, 'key': 'value'}
+                    ]
+                }
+        )
 
     def test_multiple_query_model_redis_mysql(self):
         from query_model import QueryModel
@@ -148,13 +157,13 @@ class MyTestCase(unittest.TestCase):
                 "service": "mysql",
                 "database": "test_db",
                 "schema": "test",
-                "filter": [{"value": {"redis__0": "key"}}]
+                "filter": [{"value": {"redis__0": "value"}}]
             }
         }
         query = QueryModel(query_request=request)
         query.execute_query()
         print(query.result)
-        assert query.result == {'redis__0': [{'key': 'value'}],
+        assert query.result == {'redis__0': [{'id': 'key', 'value': 'value'}],
                                 'mysql__test_db__test': [{'id': 'id', 'value': 'value'}]}
 
     def test_multiple_query_model_mongo_redis_mysql(self):
@@ -162,7 +171,7 @@ class MyTestCase(unittest.TestCase):
         mongo_client = MongodbClient(target='test')
         inserted = mongo_client.collection.insert_one({'key': 'value'})
         redis_client = RedisClient(host='localhost', port=6379, database=0)
-        redis_client.connection.set('key', 'value')
+        redis_client.connection.set('value', 'id')
         mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
         with mysql_client.connection as connection:
             with connection.cursor() as cursor:
@@ -176,12 +185,12 @@ class MyTestCase(unittest.TestCase):
             "on_result": {
                 "service": "redis",
                 "database": "0",
-                "filter": [{"key": {"mongodb__test_db__test": "key"}}],
+                "filter": [{"id": {"mongodb__test_db__test": "key"}}],
                 "on_result": {
                     "service": "mysql",
                     "database": "test_db",
                     "schema": "test",
-                    "filter": [{"value": {"redis__0": "key"}}]
+                    "filter": [{"value": {"redis__0": "id"}}]
                 }
             }
         }
@@ -190,7 +199,7 @@ class MyTestCase(unittest.TestCase):
         print(query.result)
         assert query.result == {
             'mongodb__test_db__test': [{'_id': inserted.inserted_id, 'key': 'value'}],
-            'redis__0': [{'key': 'value'}],
+            'redis__0': [{'id': 'value', 'value': 'id'}],
             'mysql__test_db__test': [{'id': 'id', 'value': 'value'}]
         }
 
@@ -209,7 +218,7 @@ class MyTestCase(unittest.TestCase):
             "service": "mysql",
             "database": "test_db",
             "schema": "test",
-            "filter": [{"Value": "value"}],
+            "filter": [{"value": "val"}],
             "on_result": {
                 "service": "mongodb",
                 "database": "test_db",
@@ -218,7 +227,7 @@ class MyTestCase(unittest.TestCase):
                 "on_result": {
                     "service": "redis",
                     "database": "0",
-                    "filter": [{"OutId": {"mongodb__test_db__test": "Id"}}]
+                    "filter": [{"key": {"mongodb__test_db__test": "id"}}]
                 }
             }
         }
@@ -226,9 +235,9 @@ class MyTestCase(unittest.TestCase):
         query.execute_query()
         print(query.result)
         assert query.result == {
-            'mysql__test_db__test': [{'Id': '1A', 'Value': 'val'}],
-            'mongodb__test_db__test': [{'Id': '1B', 'Value': 'val', 'OutId': '1A',}],
-            'redis__0': [{'1B': '1C'}],
+            'mysql__test_db__test': [{'id': '1A', 'value': 'val'}],
+            'mongodb__test_db__test': [{'_id': inserted.inserted_id, 'id': '1B', 'Value': 'val', 'OutId': '1A'}],
+            'redis__0': [{'id': '1B', 'value': '1C'}],
         }
 
     def test_multiple_query_model_mysql_redis_mongo_with_alias(self):
@@ -236,10 +245,10 @@ class MyTestCase(unittest.TestCase):
         mysql_client = MysqlClient(target='test', user='root', password='rootpassword', database='test_db')
         with mysql_client.connection as connection:
             with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO test VALUES ('id', 'value')")
+                cursor.execute("INSERT INTO test VALUES ('key', 'value')")
             connection.commit()
         redis_client = RedisClient(host='localhost', port=6379, database=0)
-        redis_client.connection.set('key', 'value')
+        redis_client.connection.set('value', 'key')
         mongo_client = MongodbClient(target='test')
         inserted = mongo_client.collection.insert_one({'key': 'value'})
         request = {
@@ -252,13 +261,13 @@ class MyTestCase(unittest.TestCase):
                 "service": "redis",
                 "database": "0",
                 "alias": "redis",
-                "filter": [{"key": {"mongodb": "key"}}],
+                "filter": [{"id": {"mongodb": "key"}}],
                 "on_result": {
                     "service": "mysql",
                     "database": "test_db",
                     "schema": "test",
                     "alias": "mysql",
-                    "filter": [{"value": {"redis": "key"}}]
+                    "filter": [{"id": {"redis": "value"}}]
                 }
             }
         }
@@ -267,8 +276,8 @@ class MyTestCase(unittest.TestCase):
         print(query.result)
         assert query.result == {
             'mongodb': [{'_id': inserted.inserted_id, 'key': 'value'}],
-            'redis': [{'key': 'value'}],
-            'mysql': [{'id': 'id', 'value': 'value'}]
+            'redis': [{'id': 'value', 'value': 'key'}],
+            'mysql': [{'id': 'key', 'value': 'value'}]
         }
 
     def test_single_query_model_mysql_with_project(self):
