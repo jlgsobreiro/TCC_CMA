@@ -26,30 +26,21 @@ def index():
     return render_template('index.html', items=items)
 
 
-@app.route('/crud/mysql')
-def crud_mysql():
-    conn = get_connection_by_type('mysql')
+@app.route('/crud/<database_type>')
+def crud_database(database_type):
+    conn = get_connection_by_type(database_type)
+    itens = itens_for_template(conn, database_type)
+    print(itens)
+    return render_template('index.html', items=itens, database_type=database_type)
+
+
+def itens_for_template(conn, database_type):
     items = conn.get_data()
-    return render_template('index.html', items=items, database_type='mysql')
-
-
-@app.route('/crud/redis')
-def crud_redis():
-    conn = get_connection_by_type('redis')
-    items = conn.get_data()
-    return render_template('index.html', items=items, database_type='redis')
-
-
-@app.route('/crud/mongodb')
-def crud_mongodb():
-    conn = get_connection_by_type('mongodb')
-    items = [x for x in conn.get_all()]
-    # set _id to id for compatibility with the template
-    for item in items:
-        item['id'] = str(item['_id'])
-        del item['_id']
-    print(items)
-    return render_template('index.html', items=items, database_type='mongodb')
+    if database_type == 'mongodb':
+        for item in items:
+            item['id'] = str(item['_id'])
+            del item['_id']
+    return items
 
 
 def get_default_connection(database: str = None, database_name: str = None, database_params: str = None):
@@ -80,14 +71,14 @@ def get_connection_by_type(database_type):
     return db.get_connection()
 
 
-@app.route('/crud/<database_type>/delete/<target_id>', methods=['POST'])
+@app.route('/crud/<database_type>/<target_id>', methods=['DELETE'])
 def delete_item_by_type(database_type, target_id):
     conn = get_connection_by_type(database_type)
     conn.delete_data_by_id(target_id)
     return redirect(f"/crud/{database_type}")
 
 
-@app.route('/crud/<database_type>/add', methods=['POST'])
+@app.route('/crud/<database_type>', methods=['POST'])
 def add_item_by_type(database_type):
     item_id = request.form.get('id')
     external_id = request.form.get('external_id')
@@ -96,12 +87,12 @@ def add_item_by_type(database_type):
     return redirect(f"/crud/{database_type}")
 
 
-@app.route('/crud/<database_type>/update/<target_id>', methods=['GET', 'POST'])
+@app.route('/crud/<database_type>/<target_id>', methods=['POST', 'GET'])
 def update_item_by_type(database_type, target_id):
     conn = get_connection_by_type(database_type)
     item = conn.get_data_by_id(target_id)
     if request.method == 'POST':
-        conn.update_data_by_id(target_id, {'name': request.form.get('name')})
+        conn.update_data_by_id(target_id, {'external_id': request.form.get('external_id')})
         return redirect(f"/crud/{database_type}")
     return render_template('update.html', item=item, database_type=database_type)
 

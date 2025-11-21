@@ -71,7 +71,7 @@
 <body>
     <div class="container">
         <h1>Items</h1>
-        <form action="/crud/{{ database_type }}/add" method="post">
+        <form action="/crud/{{ database_type }}" method="post">
             <input type="text" name="id" placeholder="ID">
             <input type="text" name="external_id" placeholder="ExternalId">
             <button type="submit">Add</button>
@@ -81,12 +81,10 @@
                 <li>
                     <span>{{ item.id }}</span>
                     <span class="actions">
-                        <form action="/crud/{{ database_type }}/update/{{ item.id }}" method="get" style="display:inline;">
+                        <form action="/crud/{{ database_type }}/{{ item.id }}" method="get" style="display:inline;">
                             <button type="submit">Update</button>
                         </form>
-                        <form action="/crud/{{ database_type }}/delete/{{ item.id }}" method="post" style="display:inline;">
-                            <button type="submit">Delete</button>
-                        </form>
+                        <button type="button" onclick="fetch(`/crud/{{ database_type }}/{{ item.id }}`, { method: 'DELETE' }).then(()=>location.reload()).catch(e=>console.error(e))" style="display:inline;">Delete</button>
                     </span>
                 </li>
             {% endfor %}

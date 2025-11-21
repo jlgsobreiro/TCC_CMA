@@ -50,9 +50,9 @@
 <body>
     <div class="container">
         <h1>Atualizar Item</h1>
-        <form action="/crud/{{ database_type }}/update/{{ target_id }}" method="post">
-            <label for="name">Nome:</label>
-            <input type="text" id="name" name="name" value="{{ item.name }}">
+        <form action="/crud/{{ database_type }}/{{ item.id }}" method="post">
+            <label for="external_id">External_id:</label>
+            <input type="text" id="external_id" name="external_id" value="{{ item.external_id }}">
             <button type="submit">Atualizar</button>
         </form>
     </div>
