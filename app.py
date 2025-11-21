@@ -41,6 +41,20 @@ def itens_for_template(conn, database_type):
             item['id'] = str(item['_id'])
             del item['_id']
     return items
+@app.route('/crud/<database_type>')
+def crud_database(database_type):
+    conn = get_connection_by_type(database_type)
+    itens = itens_for_template(conn, database_type)
+    print(itens)
+    return render_template('index.html', items=itens, database_type=database_type)
+
+
+def itens_for_template(conn, database_type):
+    items = conn.get_data()
+    if database_type == 'redis':
+        for item in items:
+            item['external_id'] = str(item['value'])
+    return items
 
 
 def get_default_connection(database: str = None, database_name: str = None, database_params: str = None):

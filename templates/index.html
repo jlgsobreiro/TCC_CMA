@@ -79,7 +79,7 @@
         <ul>
             {% for item in items %}
                 <li>
-                    <span>{{ item.id }}</span>
+                    <span>{{ item.id }}  ||  {{ item.external_id}}</span>
                     <span class="actions">
                         <form action="/crud/{{ database_type }}/{{ item.id }}" method="get" style="display:inline;">
                             <button type="submit">Update</button>

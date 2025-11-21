@@ -6,7 +6,7 @@ def setup_databases():
     Databases.drop_collection()
     db1 = Databases(
         database_type='mysql',
-        database='',
+        database='test_db',
         params={
             'host': 'localhost',
             'port': 3306,
@@ -33,11 +33,11 @@ def create_mysql_fixtures():
         with connection.cursor() as cursor:
             cursor.execute('CREATE DATABASE IF NOT EXISTS test_db')
             cursor.execute('USE test_db')
-            cursor.execute('CREATE TABLE IF NOT EXISTS test (id VARCHAR(255), value VARCHAR(255))')
+            cursor.execute('CREATE TABLE IF NOT EXISTS test (id VARCHAR(255), external_id VARCHAR(255))')
         connection.commit()
-        mysql_client.insert_data({'id': '1', 'value': 'value'})
-        mysql_client.insert_data({'id': '2', 'value': 'value2'})
-        mysql_client.insert_data({'id': '3', 'value': 'value3'})
+        mysql_client.insert_data({'id': '1', 'external_id': 'value'})
+        mysql_client.insert_data({'id': '2', 'external_id': 'value2'})
+        mysql_client.insert_data({'id': '3', 'external_id': 'value3'})
 
 
 def create_redis_fixtures():
@@ -51,9 +51,9 @@ def create_redis_fixtures():
 def create_mongo_fixtures():
     db3 = find_database({'database_type': 'mongodb', 'database': 'test_db'})
     mongo_client = db3.get_connection()
-    mongo_client.insert_data({'key': 'value'})
-    mongo_client.insert_data({'key2': 'value2'})
-    mongo_client.insert_data({'key3': 'value3'})
+    mongo_client.insert_data({'id': '1', 'external_id': 'value'})
+    mongo_client.insert_data({'id': '2', 'external_id': 'value2'})
+    mongo_client.insert_data({'id': '3', 'external_id': 'value3'})
 
 
 def create_fixtures():

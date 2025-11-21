@@ -138,7 +138,6 @@ class QueryModel:
         print(f'Query result: {query_result}')
         return query_result
 
-
     def update_filter_from_previous_results_values(self):
         if not self.filter:
             return
