@@ -1,6 +1,6 @@
 # Subir os containers
 up:
-	docker compose up -d
+	docker compose up -d --build
 
 # Parar os containers
 down:

@@ -1,94 +1,963 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>CRUD Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCC_CMA - Gerenciador Poliglota Cross-Database</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --mysql-color: #0284c7;
+            --mysql-bg: #e0f2fe;
+            --mongo-color: #16a34a;
+            --mongo-bg: #dcfce7;
+            --redis-color: #dc2626;
+            --redis-bg: #fee2e2;
+            --query-color: #7c3aed;
+            --query-bg: #f3e8ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --body-bg: #f8fafc;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f7f7f7;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--body-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
         }
-        .container {
-            max-width: 500px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 30px 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
+
+        /* Top Navigation Header */
+        header.navbar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 14px 28px;
             display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand .logo-icon {
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        .nav-brand .title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.3px;
+        }
+        .nav-brand .subtitle {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .nav-tab {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .nav-tab:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-tab.active-mysql {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .nav-tab.active-mongodb {
+            background: #16a34a;
+            color: #ffffff;
+        }
+        .nav-tab.active-redis {
+            background: #dc2626;
+            color: #ffffff;
+        }
+        .nav-tab.active-query {
+            background: #7c3aed;
+            color: #ffffff;
+        }
+
+        /* Container */
+        .main-container {
+            max-width: 1300px;
+            margin: 24px auto;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Subsystem Navigator Bar */
+        .subsystem-nav {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .subsystem-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .subsystem-groups {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: center;
+        }
+        .subsystem-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+        .subsystem-name {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #475569;
+            padding: 2px 6px;
+            text-transform: uppercase;
+        }
+        .table-pill {
+            text-decoration: none;
+            padding: 5px 12px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            border-radius: 6px;
+            color: #475569;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            transition: all 0.15s ease;
+        }
+        .table-pill:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .table-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Table Control & Action Bar */
+        .control-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .info-title {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
         }
-        input[type="text"] {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        .info-title h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
         }
-        button {
-            background: #007bff;
-            color: #fff;
-            border: none;
+        .badge-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-type.mysql { background: var(--mysql-bg); color: var(--mysql-color); }
+        .badge-type.mongodb { background: var(--mongo-bg); color: var(--mongo-color); }
+        .badge-type.redis { background: var(--redis-bg); color: var(--redis-color); }
+
+        .search-and-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-box input {
+            padding: 8px 14px 8px 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            outline: none;
+            width: 260px;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            width: 320px;
+        }
+        .search-icon {
+            position: absolute;
+            left: 11px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border: none;
             cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
         }
-        button:hover {
-            background: #0056b3;
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
-        ul {
-            list-style: none;
-            padding: 0;
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
-        li {
-            background: #f1f1f1;
-            margin-bottom: 10px;
-            padding: 10px 15px;
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+        .btn-edit {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-edit:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .btn-delete {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+
+        /* Collapsible Form Card */
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: none;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        .form-card.open {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-card-header h2 {
+            font-size: 1.1rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .form-control {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.88rem;
+            outline: none;
+            transition: all 0.15s ease;
+            background: #ffffff;
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .form-actions {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Table Card */
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .table-card-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .table-count-badge {
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 600px;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+        table.data-table th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            z-index: 10;
+        }
+        table.data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+        table.data-table tr:hover {
+            background: #f8fafc;
+        }
+        .id-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 2px 7px;
             border-radius: 4px;
+            font-size: 0.84em;
+            display: inline-block;
+        }
+
+        /* Status & Enum Badges */
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .pill-success { background: #dcfce7; color: #15803d; }
+        .pill-blue { background: #e0f2fe; color: #0369a1; }
+        .pill-warning { background: #fef3c7; color: #b45309; }
+        .pill-danger { background: #fee2e2; color: #b91c1c; }
+        .pill-neutral { background: #f1f5f9; color: #475569; }
+
+        /* JSON Cell Viewer Button */
+        .btn-view-json {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-view-json:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+
+        /* Actions Column */
+        .actions-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: #64748b;
+        }
+        .empty-state .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: #94a3b8;
+        }
+        .empty-state h3 {
+            font-size: 1.1rem;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        /* JSON Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-box {
+            background: #ffffff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            background: #0f172a;
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .actions a {
-            margin-left: 10px;
-            color: #007bff;
-            text-decoration: none;
-            font-size: 0.95em;
+        .modal-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
         }
-        .actions a:hover {
-            text-decoration: underline;
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: #ffffff; }
+        .modal-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        .modal-body pre {
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        .modal-footer {
+            padding: 12px 20px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Toast Alert */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 2000;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Items</h1>
-        <form action="/crud/{{ database_type }}" method="post">
-            <input type="text" name="id" placeholder="ID">
-            <input type="text" name="external_id" placeholder="ExternalId">
-            <button type="submit">Add</button>
-        </form>
-        <ul>
-            {% for item in items %}
-                <li>
-                    <span>{{ item.id }}  ||  {{ item.external_id}}</span>
-                    <span class="actions">
-                        <form action="/crud/{{ database_type }}/{{ item.id }}" method="get" style="display:inline;">
-                            <button type="submit">Update</button>
-                        </form>
-                        <button type="button" onclick="fetch(`/crud/{{ database_type }}/{{ item.id }}`, { method: 'DELETE' }).then(()=>location.reload()).catch(e=>console.error(e))" style="display:inline;">Delete</button>
+
+    <!-- Header / Navbar Principal -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <span class="logo-icon">🔀</span>
+            <div>
+                <div class="title">TCC_CMA &bull; Multi-Database</div>
+                <div class="subtitle">Arquitetura de Dados Poliglota (CMS, SMS, FNMS, OMS, FMS)</div>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <a href="/crud/mysql?db=cms&table=clientes" class="nav-tab {% if database_type == 'mysql' %}active-mysql{% endif %}">
+                <span>🐬</span> MySQL
+            </a>
+            <a href="/crud/mongodb?db=oms&table=pedidos" class="nav-tab {% if database_type == 'mongodb' %}active-mongodb{% endif %}">
+                <span>🍃</span> MongoDB
+            </a>
+            <a href="/crud/redis?db=0&table=gps_positions" class="nav-tab {% if database_type == 'redis' %}active-redis{% endif %}">
+                <span>⚡</span> Redis
+            </a>
+            <a href="/query" class="nav-tab {% if request and request.path == '/query' %}active-query{% endif %}">
+                <span>🔍</span> Consultas Cross-DB (DSL)
+            </a>
+        </nav>
+    </header>
+
+    <div class="main-container">
+
+        <!-- Barra de Navegação de Subsistemas e Tabelas -->
+        <div class="subsystem-nav">
+            <div class="subsystem-header">
+                <span>Subsistemas &bull; {{ database_type | upper }}</span>
+                <span>Selecione a tabela ou coleção para visualizar</span>
+            </div>
+            <div class="subsystem-groups">
+                {% if available_schemas %}
+                    {% for db_name, db_info in available_schemas.items() %}
+                        <div class="subsystem-group">
+                            <span class="subsystem-name">{{ db_info.label.split('-')[0].strip() if '-' in db_info.label else db_name }}</span>
+                            {% for tbl in db_info.tables %}
+                                <a href="/crud/{{ database_type }}?db={{ db_name }}&table={{ tbl }}" 
+                                   class="table-pill {% if current_db == db_name and current_table == tbl %}active{% endif %}"
+                                   title="Banco: {{ db_name }} / Tabela: {{ tbl }}">
+                                    {{ tbl }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum subsistema configurado.</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Barra de Controle & Busca -->
+        <div class="control-bar">
+            <div class="info-title">
+                <h1>{{ current_table or 'Registros' }}</h1>
+                <span class="badge-type {{ database_type }}">{{ database_type }} &bull; {{ current_db }}</span>
+            </div>
+
+            <div class="search-and-actions">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="filterInput" placeholder="Filtrar dados em tempo real..." onkeyup="filterTable()">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="toggleFormCard()">
+                    <span id="toggleBtnIcon">+</span>
+                    <span>Novo Registro</span>
+                </button>
+                <a href="javascript:location.reload()" class="btn btn-secondary" title="Recarregar dados">
+                    🔄
+                </a>
+            </div>
+        </div>
+
+        <!-- Card de Inserção de Novo Registro (Colapsável) -->
+        <div class="form-card" id="formCard">
+            <div class="form-card-header">
+                <h2>
+                    <span>➕ Inserir Novo Registro</span>
+                    <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted);">
+                        em {{ current_db }}.{{ current_table }}
                     </span>
-                </li>
-            {% endfor %}
-        </ul>
+                </h2>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleFormCard()">Fechar ✕</button>
+            </div>
+
+            <form action="/crud/{{ database_type }}" method="post" id="insertForm">
+                <input type="hidden" name="_db" value="{{ current_db }}">
+                <input type="hidden" name="_table" value="{{ current_table }}">
+
+                <div class="form-grid" id="fieldsContainer">
+                    {% if columns %}
+                        {% for col in columns %}
+                            {% if col != '_id' %}
+                                <div class="form-group">
+                                    <label for="input_{{ col }}">{{ col }}</label>
+                                    <input type="text" 
+                                           id="input_{{ col }}" 
+                                           name="{{ col }}" 
+                                           placeholder="Valor para {{ col }}" 
+                                           class="form-control"
+                                           {% if col == 'id' %}required{% endif %}>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="form-group">
+                            <label for="input_id">ID</label>
+                            <input type="text" id="input_id" name="id" placeholder="Identificador único" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input_val">Valor / Conteúdo</label>
+                            <input type="text" id="input_val" name="value" placeholder="Valor ou conteúdo" class="form-control">
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Salvar no Banco</button>
+                    <button type="button" class="btn btn-secondary" onclick="addCustomFieldPrompt()">+ Outro Campo</button>
+                    <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela Principal de Registros -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <span class="table-count-badge" id="rowCountDisplay">
+                    Mostrando <strong>{{ items|length }}</strong> registro(s)
+                </span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    Clique em "Editar" para atualizar campos individuais.
+                </span>
+            </div>
+
+            {% if items and items|length > 0 %}
+                {% if not columns %}
+                    {% set columns = [] %}
+                    {% for item in items %}
+                        {% if item is mapping %}
+                            {% for k in item.keys() %}
+                                {% if k not in columns %}
+                                    {% set _ = columns.append(k) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                <div class="table-responsive">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                {% for col in columns %}
+                                    <th>{{ col }}</th>
+                                {% endfor %}
+                                <th style="text-align: right; width: 140px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    {% for col in columns %}
+                                        <td>
+                                            {% set val = item.get(col) %}
+                                            {% if col in ['id', '_id'] %}
+                                                <span class="id-badge">{{ val }}</span>
+                                            {% elif val is mapping or (val is sequence and val is not string) %}
+                                                {% set json_str = val | tojson %}
+                                                <button type="button" 
+                                                        class="btn-view-json" 
+                                                        onclick='openJsonModal({{ json_str | tojson }}, "{{ col }}")'>
+                                                    { } Ver JSON ({{ val|length }})
+                                                </button>
+                                            {% elif val in ['ENTREGUE', 'PAGO', 'ATIVO', 'CONCLUIDA', 'CONCLUIDO'] %}
+                                                <span class="pill-badge pill-success">{{ val }}</span>
+                                            {% elif val in ['EM_TRANSITO', 'PROCESSANDO', 'EM_ANDAMENTO', 'PJ'] %}
+                                                <span class="pill-badge pill-blue">{{ val }}</span>
+                                            {% elif val in ['PENDENTE', 'AGUARDANDO', 'ABERTA', 'PF'] %}
+                                                <span class="pill-badge pill-warning">{{ val }}</span>
+                                            {% elif val in ['CANCELADO', 'CANCELADA', 'FALHA'] %}
+                                                <span class="pill-badge pill-danger">{{ val }}</span>
+                                            {% else %}
+                                                {{ val if val is not none and val != '' else '-' }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="actions-cell">
+                                        {% set target_id = item.get('id') if item.get('id') is not none else item.get('_id') %}
+                                        {% if target_id is not none %}
+                                            <a href="/crud/{{ database_type }}/{{ target_id }}?db={{ current_db }}&table={{ current_table }}" 
+                                               class="btn btn-sm btn-edit" title="Editar registro">
+                                                ✏️ Editar
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-delete" 
+                                                    onclick="deleteItem('{{ database_type }}', '{{ target_id }}', '{{ current_db }}', '{{ current_table }}')" 
+                                                    title="Excluir registro">
+                                                🗑️
+                                            </button>
+                                        {% else %}
+                                            <span style="color: var(--text-muted); font-size: 0.75rem;">Sem ID</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="icon">📂</div>
+                    <h3>Nenhum registro encontrado</h3>
+                    <p>Esta tabela ou coleção ainda não possui registros. Clique no botão "+ Novo Registro" acima para inserir.</p>
+                </div>
+            {% endif %}
+        </div>
+
     </div>
+
+    <!-- Modal para Visualização de JSON Complexo -->
+    <div class="modal-overlay" id="jsonModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalTitle">Estrutura JSON do Campo</h3>
+                <button type="button" class="modal-close" onclick="closeJsonModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <pre><code id="modalJsonContent"></code></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="copyModalJson()">📋 Copiar JSON</button>
+                <button type="button" class="btn btn-primary" onclick="closeJsonModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Toggle Formulário de Inserção
+        function toggleFormCard() {
+            const card = document.getElementById('formCard');
+            const icon = document.getElementById('toggleBtnIcon');
+            card.classList.toggle('open');
+            if (card.classList.contains('open')) {
+                icon.textContent = '✕';
+                const firstInput = card.querySelector('input[type="text"]:not([readonly])');
+                if (firstInput) firstInput.focus();
+            } else {
+                icon.textContent = '+';
+            }
+        }
+
+        // Filtro em tempo real na tabela
+        function filterTable() {
+            const input = document.getElementById('filterInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('dataTable');
+            if (!table) return;
+
+            const trs = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            let visibleCount = 0;
+
+            for (let i = 0; i < trs.length; i++) {
+                const tr = trs[i];
+                const text = tr.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    tr.style.display = '';
+                    visibleCount++;
+                } else {
+                    tr.style.display = 'none';
+                }
+            }
+
+            const counter = document.getElementById('rowCountDisplay');
+            if (counter) {
+                counter.innerHTML = `Mostrando <strong>${visibleCount}</strong> de ${trs.length} registro(s)`;
+            }
+        }
+
+        // Adicionar novo campo arbitrário ao formulário
+        function addCustomFieldPrompt() {
+            const fieldName = prompt("Nome do novo campo (ex: 'status', 'observacao', 'peso_kg'):");
+            if (!fieldName || !fieldName.trim()) return;
+            const cleanName = fieldName.trim();
+            const container = document.getElementById('fieldsContainer');
+            
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `
+                <label for="input_${cleanName}">${cleanName}</label>
+                <input type="text" id="input_${cleanName}" name="${cleanName}" placeholder="Valor para ${cleanName}" class="form-control">
+            `;
+            container.appendChild(group);
+            document.getElementById(`input_${cleanName}`).focus();
+        }
+
+        // Excluir registro
+        function deleteItem(databaseType, targetId, db, table) {
+            if (!confirm(`Deseja realmente excluir o registro com ID: "${targetId}"?`)) return;
+            
+            let url = `/crud/${databaseType}/${encodeURIComponent(targetId)}?db=${encodeURIComponent(db)}&table=${encodeURIComponent(table)}`;
+            fetch(url, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    showToast('Registro excluído com sucesso!');
+                    setTimeout(() => location.reload(), 400);
+                } else {
+                    alert('Erro ao excluir registro.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro na requisição de exclusão.');
+            });
+        }
+
+        // Modal de JSON
+        let currentModalText = "";
+        function openJsonModal(jsonData, fieldName) {
+            currentModalText = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData, null, 2);
+            document.getElementById('modalTitle').textContent = `Detalhes JSON &bull; Campo: ${fieldName}`;
+            document.getElementById('modalJsonContent').textContent = currentModalText;
+            document.getElementById('jsonModal').classList.add('open');
+        }
+
+        function closeJsonModal() {
+            document.getElementById('jsonModal').classList.remove('open');
+        }
+
+        function copyModalJson() {
+            if (!currentModalText) return;
+            navigator.clipboard.writeText(currentModalText).then(() => {
+                showToast('JSON copiado para a área de transferência!');
+            });
+        }
+
+        // Toast de feedback
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('jsonModal');
+            if (e.target === modal) {
+                closeJsonModal();
+            }
+        });
+    </script>
 </body>
 </html>

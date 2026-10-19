@@ -1,5 +1,3 @@
-from django.db.models.expressions import result
-
 from databases.database_interface import DBInterface
 from databases.databases_model import Databases
 
@@ -96,6 +94,8 @@ class QueryModel:
     def _update_filter_with_item(self, filter_dict, item):
         if not filter_dict:
             return {}
+        if isinstance(filter_dict, dict):
+            filter_dict = [filter_dict]
         updated_filter = {}
         for itens in filter_dict:
             if isinstance(itens, dict):

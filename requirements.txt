@@ -3,6 +3,6 @@ wheel~=0.45.1
 Flask~=3.0.3
 pymongo~=4.8.0
 PyMySQL~=1.1.1
-Booktype~=1.5
+cryptography>=42.0.0
 mongoengine~=0.29.0
 redis~=6.2.0

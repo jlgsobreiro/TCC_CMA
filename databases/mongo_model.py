@@ -23,18 +23,22 @@ class MongodbClient(DBInterface):
 
     def get_data(self, **kwargs) -> Cursor[Mapping[str, Any] | Any] | list[Any]:
         query = kwargs.get('query')
+        project = kwargs.get('project')
+        projection = {field: 1 for field in project} if project else None
+        if projection is not None and '_id' not in projection:
+            projection['_id'] = 0
         results = []
         if not query:
-            res = [x for x in self.collection.find()]
+            res = [x for x in self.collection.find(projection=projection)]
             results.extend(res)
         else:
             for q in query:
                 if isinstance(q, dict):
-                    results.extend([x for x in self.collection.find(q)])
+                    results.extend([x for x in self.collection.find(q, projection=projection)])
                 elif isinstance(q, list):
                     for sub_q in q:
                         if isinstance(sub_q, dict):
-                            results.extend([x for x in self.collection.find(sub_q)])
+                            results.extend([x for x in self.collection.find(sub_q, projection=projection)])
                         else:
                             raise ValueError(f'Invalid query type: {type(sub_q)}')
                 else:
@@ -51,7 +55,11 @@ class MongodbClient(DBInterface):
         return self.collection.delete_one(query)
 
     def delete_data_by_id(self, target_id: str):
-        return self.collection.delete_one({'_id': ObjectId(target_id)})
+        if ObjectId.is_valid(target_id):
+            res = self.collection.delete_one({'_id': ObjectId(target_id)})
+            if res.deleted_count > 0:
+                return res
+        return self.collection.delete_one({'id': target_id})
 
     def get_all(self):
         return self.collection.find()
@@ -60,10 +68,18 @@ class MongodbClient(DBInterface):
         return [x for x in self.collection.find(filter=query, projection=project)]
 
     def get_data_by_id(self, target_id: str):
-        return self.collection.find_one({'_id': ObjectId(target_id)})
+        if ObjectId.is_valid(target_id):
+            res = self.collection.find_one({'_id': ObjectId(target_id)})
+            if res:
+                return res
+        return self.collection.find_one({'id': target_id})
 
     def update_data_by_id(self, target_id: str, data: dict):
-        return self.collection.update_one({'_id': ObjectId(target_id)}, {'$set': data})
+        if ObjectId.is_valid(target_id):
+            res = self.collection.update_one({'_id': ObjectId(target_id)}, {'$set': data})
+            if res.matched_count > 0:
+                return res
+        return self.collection.update_one({'id': target_id}, {'$set': data})
 
 if __name__ == '__main__':
     client = MongodbClient(target='test')

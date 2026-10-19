@@ -1,3 +1,4 @@
+from os import getenv
 from mongoengine import Document, StringField, connect, IntField, DictField
 
 from databases.database_interface import DBInterface
@@ -7,7 +8,7 @@ from databases.redis_model import RedisClient
 
 
 class Databases(Document):
-    connect('databases')
+    connect('databases', host=getenv('MONGO_HOST', 'localhost'))
     database_type = StringField(required=True)
     database = StringField(required=True)
     params = DictField()
@@ -28,7 +29,10 @@ class Databases(Document):
         client_found = existing_clients.get(f"{self.database_type.capitalize()}Client")
         if client_found is None:
             raise ValueError(f'No client found for {self.database_type}')
-        return client_found(database=self.database, **self.params)
+        params = dict(self.params) if self.params else {}
+        if getattr(self, 'table', None) and self.database_type in ('mysql', 'mongodb'):
+            params['target'] = self.table
+        return client_found(database=self.database, **params)
 
 
         # if self.database_type == 'mysql':

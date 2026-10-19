@@ -6,7 +6,7 @@ services:
     container_name: mysql_container
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydatabase
+      MYSQL_DATABASE: test_db
     ports:
       - "3306:3306"
     volumes:
@@ -38,7 +38,10 @@ services:
         - MESSAGE=Hello from Flask1
         - DB=mysql
         - DB_NAME=test_db
-        - DB_PARAMS=host=localhost,port=3306,user=root,password=rootpassword
+        - DB_PARAMS=host=mysql,port=3306,user=root,password=rootpassword
+        - MYSQL_HOST=mysql
+        - MONGO_HOST=mongodb
+        - REDIS_HOST=redis
     volumes:
       - .:/app
     depends_on:
@@ -56,7 +59,10 @@ services:
         - MESSAGE=Hello from Flask2
         - DB=mongodb
         - DB_NAME=test_db
-        - DB_PARAMS=target=test,user=root,password=rootpassword
+        - DB_PARAMS=host=mongodb,port=27017,target=test
+        - MYSQL_HOST=mysql
+        - MONGO_HOST=mongodb
+        - REDIS_HOST=redis
     volumes:
       - .:/app
     depends_on:
@@ -74,7 +80,10 @@ services:
         - MESSAGE=Hello from Flask3
         - DB=redis
         - DB_NAME=0
-        - DB_PARAMS=host=localhost,port=6379
+        - DB_PARAMS=host=redis,port=6379
+        - MYSQL_HOST=mysql
+        - MONGO_HOST=mongodb
+        - REDIS_HOST=redis
     volumes:
       - .:/app
     depends_on:

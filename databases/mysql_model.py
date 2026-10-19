@@ -81,7 +81,11 @@ class MysqlClient(DBInterface):
             self.connection = None
 
     def connect(self, user, password, database):
-        return pymysql.connect(host=self.host, port=self.port, user=user, password=password, database=database)
+        conn = pymysql.connect(host=self.host, port=self.port, user=user, password=password)
+        with conn.cursor() as cursor:
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+        conn.select_db(database)
+        return conn
 
     def get_all(self) -> list[dict]:
         query = f'SELECT * FROM {self.table}'

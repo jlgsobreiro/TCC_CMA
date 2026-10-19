@@ -1,60 +1,284 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Update Item</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Registro - TCC_CMA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --body-bg: #f8fafc;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f7f7f7;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--body-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
         }
-        .container {
-            max-width: 400px;
-            margin: 60px auto;
-            background: #fff;
-            padding: 30px 40px;
+
+        /* Top Navigation Header */
+        header.navbar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand .logo-icon {
+            font-size: 1.4rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        h1 {
-            text-align: center;
-            color: #333;
+        .nav-brand .title {
+            font-weight: 700;
+            font-size: 1.1rem;
         }
+
+        .main-container {
+            max-width: 720px;
+            margin: 36px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .card-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            background: #e2e8f0;
+            color: #334155;
+        }
+
         form {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 18px;
         }
-        input[type="text"] {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        button {
-            background: #007bff;
-            color: #fff;
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        label .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: normal;
+            text-transform: none;
+        }
+        input[type="text"], textarea {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.92rem;
+            outline: none;
+            background: #ffffff;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        input.readonly {
+            background: #f8fafc;
+            color: #64748b;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        textarea.code-editor {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+            min-height: 120px;
+            background: #f8fafc;
+            line-height: 1.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-color);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
             border: none;
-            padding: 10px 0;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 1em;
+            text-decoration: none;
+            transition: all 0.15s ease;
         }
-        button:hover {
-            background: #0056b3;
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            flex: 1;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #0f172a;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Atualizar Item</h1>
-        <form action="/crud/{{ database_type }}/{{ item.id }}" method="post">
-            <label for="external_id">External_id:</label>
-            <input type="text" id="external_id" name="external_id" value="{{ item.external_id }}">
-            <button type="submit">Atualizar</button>
-        </form>
+
+    <header class="navbar">
+        <div class="nav-brand">
+            <span class="logo-icon">✏️</span>
+            <div>
+                <div class="title">TCC_CMA &bull; Atualização de Registro</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="breadcrumb">
+            <a href="/crud/{{ database_type }}?db={{ current_db }}&table={{ current_table }}">
+                ← Voltar para {{ current_db }}.{{ current_table }}
+            </a>
+            <span>/</span>
+            <span>Editar Registro</span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1>
+                    <span>Editar Registro</span>
+                </h1>
+                <span class="badge-type">{{ database_type }} &bull; {{ current_db }}</span>
+            </div>
+
+            {% set form_id = target_id if target_id else (item.id if item and item.id is defined else item._id) %}
+            <form action="/crud/{{ database_type }}/{{ form_id }}" method="post">
+                <input type="hidden" name="_db" value="{{ current_db }}">
+                <input type="hidden" name="_table" value="{{ current_table }}">
+
+                {% if item is mapping %}
+                    {% for key, value in item.items() %}
+                        <div class="form-group">
+                            <label for="field_{{ key }}">
+                                <span>{{ key }}</span>
+                                {% if key in ['id', '_id'] %}
+                                    <span class="hint">🔒 Identificador (Não editável)</span>
+                                {% elif value is mapping or (value is sequence and value is not string) %}
+                                    <span class="hint">{ } Objeto JSON</span>
+                                {% endif %}
+                            </label>
+
+                            {% if key in ['id', '_id'] %}
+                                <input type="text" id="field_{{ key }}" name="{{ key }}" value="{{ value }}" readonly class="readonly">
+                            {% elif value is mapping or (value is sequence and value is not string) %}
+                                <textarea id="field_{{ key }}" name="{{ key }}" class="code-editor">{{ value | tojson(indent=2) }}</textarea>
+                            {% else %}
+                                <input type="text" id="field_{{ key }}" name="{{ key }}" value="{{ value if value is not none else '' }}">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="form-group">
+                        <label for="external_id">Valor do Registro</label>
+                        <input type="text" id="external_id" name="value" value="{{ item }}">
+                    </div>
+                {% endif %}
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="/crud/{{ database_type }}?db={{ current_db }}&table={{ current_table }}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
+
 </body>
 </html>

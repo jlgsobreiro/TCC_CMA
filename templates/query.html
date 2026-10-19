@@ -1,52 +1,789 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Consulta JSON</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas Cross-Database DSL - TCC_CMA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; }
-        .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 30px 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        textarea { width: 100%; height: 120px; border-radius: 4px; border: 1px solid #ccc; padding: 10px; font-family: monospace; }
-        button { background: #007bff; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #0056b3; }
-        pre { background: #f1f1f1; padding: 15px; border-radius: 4px; margin-top: 20px; overflow-x: auto; }
+        :root {
+            --primary: #7c3aed;
+            --primary-hover: #6d28d9;
+            --primary-light: #f3e8ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --body-bg: #f8fafc;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--body-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navigation Header */
+        header.navbar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand .logo-icon {
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        .nav-brand .title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.3px;
+        }
+        .nav-brand .subtitle {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .nav-tab {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .nav-tab:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-tab.active-query {
+            background: #7c3aed;
+            color: #ffffff;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1100px;
+            margin: 28px auto;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .card-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Preset Scenarios Selector */
+        .preset-container {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .preset-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .preset-select {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #0f172a;
+            background: #ffffff;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .preset-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+        }
+        .preset-desc {
+            font-size: 0.82rem;
+            color: #475569;
+            font-style: italic;
+        }
+
+        /* Textarea Editor */
+        .editor-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .editor-header label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .editor-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        textarea.query-editor {
+            width: 100%;
+            height: 260px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            background: #f8fafc;
+            color: #0f172a;
+            outline: none;
+            resize: vertical;
+            line-height: 1.5;
+            transition: all 0.15s ease;
+        }
+        textarea.query-editor:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(124, 58, 237, 0.25);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            border-radius: 6px;
+        }
+
+        .actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Results Card */
+        .result-container {
+            margin-top: 24px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .result-box {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+            overflow-x: auto;
+            max-height: 520px;
+            line-height: 1.5;
+            border: 1px solid #1e293b;
+        }
+        .error-card {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .error-card strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        /* Syntax Reference Accordion */
+        details.syntax-guide {
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 14px 18px;
+        }
+        details.syntax-guide summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #334155;
+            outline: none;
+            user-select: none;
+        }
+        details.syntax-guide summary:hover {
+            color: var(--primary);
+        }
+        .guide-content {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .guide-table th, .guide-table td {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .guide-table th {
+            background: #f8fafc;
+            color: #334155;
+        }
+        code.inline {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: #0f172a;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Consulta JSON</h1>
-        <form action="/query" method="post">
-            <label for="query">Digite sua query JSON:</label>
-            <textarea id="query" name="query" required>{{
-                request.form.query or
-                '{
+
+    <!-- Header Principal -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <span class="logo-icon">🔍</span>
+            <div>
+                <div class="title">TCC_CMA &bull; Consultas Declarativas Cross-Database</div>
+                <div class="subtitle">Processador de Consultas Poliglotas Baseado em JSON DSL</div>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <a href="/crud/mysql?db=cms&table=clientes" class="nav-tab">
+                <span>🐬</span> MySQL
+            </a>
+            <a href="/crud/mongodb?db=oms&table=pedidos" class="nav-tab">
+                <span>🍃</span> MongoDB
+            </a>
+            <a href="/crud/redis?db=0&table=gps_positions" class="nav-tab">
+                <span>⚡</span> Redis
+            </a>
+            <a href="/query" class="nav-tab active-query">
+                <span>🔍</span> Consultas Cross-DB (DSL)
+            </a>
+        </nav>
+    </header>
+
+    <div class="main-container">
+
+        <div class="card">
+            <div class="card-header">
+                <h1>
+                    <span>Consulta Declarativa Multi-Database</span>
+                </h1>
+                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                    DSL Cross-Database &bull; Execução Automatizada
+                </span>
+            </div>
+
+            <!-- Seleção de Cenários Pré-configurados (Casos do TCC) -->
+            <div class="preset-container">
+                <div class="preset-label">
+                    <span>💡 Casos de Uso Pré-configurados do TCC (Capítulo 5):</span>
+                </div>
+                <select id="presetSelect" class="preset-select" onchange="loadPreset()">
+                    <option value="">-- Escolha um cenário para carregar automaticamente no editor --</option>
+                    <option value="caso1">Caso 1: CMS (MySQL) + OMS (MongoDB) - Cliente PJ e seus Pedidos</option>
+                    <option value="caso2">Caso 2: OMS (MongoDB) + SMS (MySQL) - Pedido e Detalhes dos Produtos dos Itens</option>
+                    <option value="caso3">Caso 3: FMS (MongoDB) + Redis - Rota, Veículo e Posição GPS em Tempo Real</option>
+                    <option value="caso4">Caso 4: CMS (MySQL) + Endereços - Cliente e Endereços de Entrega/Faturamento</option>
+                    <option value="caso5">Caso 5: CMS (MySQL) + FNMS (MySQL) - Cliente e Notas Fiscais Emitidas</option>
+                    <option value="caso6">Caso 6: FNMS (MySQL) - Nota Fiscal, Linhas, Cobranças e Pagamentos</option>
+                    <option value="caso7">Caso 7: SMS (MySQL) - Galpão, Setores e Produtos em Estoque</option>
+                    <option value="simples_mysql">Consulta Simples: Clientes no CMS (MySQL)</option>
+                    <option value="simples_mongo">Consulta Simples: Pedidos no OMS (MongoDB)</option>
+                    <option value="simples_redis">Consulta Simples: Posições GPS no Redis (DB 0)</option>
+                </select>
+                <div id="presetDescription" class="preset-desc">
+                    Selecione um caso acima para preencher o editor JSON e testar consultas cruzadas entre diferentes bancos.
+                </div>
+            </div>
+
+            <!-- Formulário com Editor de Query -->
+            <form action="/query" method="post" id="queryForm">
+                <div class="editor-container">
+                    <div class="editor-header">
+                        <label for="query">Estrutura da Consulta (JSON):</label>
+                        <div class="editor-tools">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="formatJsonEditor()">✨ Formatar JSON</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="copyEditorQuery()">📋 Copiar</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="clearEditor()">🔄 Limpar</button>
+                        </div>
+                    </div>
+                    <textarea id="query" name="query" class="query-editor" required>{{
+raw_query or
+'{
+  "service": "mysql",
+  "database": "cms",
+  "schema": "clientes",
+  "alias": "cliente",
+  "filter": {
+    "id": "1"
+  },
+  "on_result": {
     "service": "mongodb",
-    "database": "test_db",
-    "schema": "test",
-    "filter": [{"id": "1"}],
-    "on_result": {
-        "service": "redis",
-        "database": "0",
-        "filter": [{"value": {"mongodb__test_db__test": "id"}}],
-        "on_result": {
-            "service": "mysql",
-            "database": "test_db",
-            "schema": "test",
-            "filter": [{"id": {"redis__0": "value"}}]
-        }
+    "database": "oms",
+    "schema": "pedidos",
+    "alias": "pedidos",
+    "filter": {
+      "cliente_id": {
+        "cliente": "id"
+      }
     }
+  }
 }'
-            }}</textarea>
-            <button type="submit">Enviar</button>
-        </form>
-        {% if result %}
-            <h2>Resultado:</h2>
-            <textarea id="query" name="query" required wrap="soft">{{ result }}</textarea>
-        {% endif %}
-        {% if error %}
-            <pre style="color: red;">{{ error }}</pre>
-        {% endif %}
+                    }}</textarea>
+                </div>
+
+                <div class="actions-row">
+                    <button type="submit" class="btn btn-primary">
+                        <span>▶ Executar Consulta Cross-Database</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Painel de Resultados -->
+            {% if result %}
+                <div class="result-container">
+                    <div class="result-header">
+                        <div class="status-badge">
+                            <span>✓ Sucesso</span>
+                            <span>&bull;</span>
+                            <span>{{ record_count }} registro(s) obtido(s)</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="copyResultJson()">
+                            📋 Copiar Resultado
+                        </button>
+                    </div>
+                    <pre class="result-box"><code id="resultJson">{{ result }}</code></pre>
+                </div>
+            {% endif %}
+
+            <!-- Painel de Erro -->
+            {% if error %}
+                <div class="error-card">
+                    <strong>⚠️ Falha na Execução da Consulta</strong>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <!-- Guia de Sintaxe da DSL -->
+            <details class="syntax-guide">
+                <summary>📖 Guia de Referência da DSL Declarativa (Como funciona a junção poliglota?)</summary>
+                <div class="guide-content">
+                    <p>A DSL permite unir dados de bancos relacionais (MySQL), orientados a documentos (MongoDB) e chave-valor (Redis) em uma única consulta estruturada em árvore:</p>
+                    
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th>Propriedade</th>
+                                <th>Tipo</th>
+                                <th>Descrição / Exemplos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="inline">service</code></td>
+                                <td>String</td>
+                                <td>Tipo do banco: <code class="inline">mysql</code>, <code class="inline">mongodb</code> ou <code class="inline">redis</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="inline">database</code></td>
+                                <td>String</td>
+                                <td>Nome do banco: <code class="inline">cms</code>, <code class="inline">sms</code>, <code class="inline">fnms</code>, <code class="inline">oms</code>, <code class="inline">fms</code>, <code class="inline">0</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="inline">schema</code></td>
+                                <td>String</td>
+                                <td>Tabela MySQL ou Coleção MongoDB (<code class="inline">clientes</code>, <code class="inline">pedidos</code>, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code class="inline">alias</code></td>
+                                <td>String</td>
+                                <td>Apelido da consulta pai para amarração de chave estrangeira em consultas filhas</td>
+                            </tr>
+                            <tr>
+                                <td><code class="inline">filter</code></td>
+                                <td>Objeto</td>
+                                <td>Condição de busca. Pode ser valor literal <code class="inline">{"id": "1"}</code> ou referência do pai <code class="inline">{"cliente_id": {"cliente": "id"}}</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="inline">on_result</code></td>
+                                <td>Objeto / Array</td>
+                                <td>Subconsulta executada para cada registro do pai, anexando os dados aninhados</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+
+        </div>
+
     </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const PRESETS = {
+            caso1: {
+                desc: "Caso 1 (CMS + OMS): Busca o Cliente PJ 'Acme Ltda' no MySQL e automaticamente agrega todos os seus Pedidos no MongoDB via 'cliente_id'.",
+                query: {
+                    service: "mysql",
+                    database: "cms",
+                    schema: "clientes",
+                    alias: "cliente",
+                    filter: { id: "1" },
+                    on_result: {
+                        service: "mongodb",
+                        database: "oms",
+                        schema: "pedidos",
+                        alias: "pedidos",
+                        filter: { cliente_id: { cliente: "id" } }
+                    }
+                }
+            },
+            caso2: {
+                desc: "Caso 2 (OMS + SMS): Busca o Pedido 'PED-1001' no MongoDB e seus Itens, fazendo o enriquecimento com o catálogo de Produtos do MySQL.",
+                query: {
+                    service: "mongodb",
+                    database: "oms",
+                    schema: "pedidos",
+                    alias: "pedido",
+                    filter: { id: "PED-1001" },
+                    on_result: {
+                        service: "mysql",
+                        database: "sms",
+                        schema: "produtos",
+                        alias: "produtos",
+                        filter: { sku: { pedido: "itens.sku" } }
+                    }
+                }
+            },
+            caso3: {
+                desc: "Caso 3 (FMS Mongo + Redis): Busca a Rota de entrega no MongoDB, o Veículo responsável e sua Coordenada GPS atual no Redis.",
+                query: {
+                    service: "mongodb",
+                    database: "fms",
+                    schema: "rotas",
+                    alias: "rota",
+                    filter: { id: "ROTA-101" },
+                    on_result: [
+                        {
+                            service: "mongodb",
+                            database: "fms",
+                            schema: "veiculos",
+                            alias: "veiculo",
+                            filter: { placa: { rota: "veiculo_placa" } }
+                        },
+                        {
+                            service: "redis",
+                            database: "0",
+                            alias: "gps",
+                            filter: { placa: { rota: "veiculo_placa" } }
+                        }
+                    ]
+                }
+            },
+            caso4: {
+                desc: "Caso 4 (CMS + Endereços): Busca o Cliente 'Acme Ltda' e todos os seus Endereços cadastrados (Entrega e Faturamento).",
+                query: {
+                    service: "mysql",
+                    database: "cms",
+                    schema: "clientes",
+                    alias: "cliente",
+                    filter: { id: "1" },
+                    on_result: {
+                        service: "mysql",
+                        database: "cms",
+                        schema: "enderecos",
+                        alias: "enderecos",
+                        filter: { cliente_id: { cliente: "id" } }
+                    }
+                }
+            },
+            caso5: {
+                desc: "Caso 5 (CMS + FNMS): Busca o Cliente 'Acme Ltda' no CMS e todas as suas Notas Fiscais emitidas no FNMS.",
+                query: {
+                    service: "mysql",
+                    database: "cms",
+                    schema: "clientes",
+                    alias: "cliente",
+                    filter: { id: "1" },
+                    on_result: {
+                        service: "mysql",
+                        database: "fnms",
+                        schema: "notas_fiscais",
+                        alias: "notas",
+                        filter: { cliente_id: { cliente: "id" } }
+                    }
+                }
+            },
+            caso6: {
+                desc: "Caso 6 (FNMS Financeiro): Busca a Nota Fiscal 'NF-2026-001', suas Linhas de Nota, Cobranças e Pagamentos confirmados.",
+                query: {
+                    service: "mysql",
+                    database: "fnms",
+                    schema: "notas_fiscais",
+                    alias: "nota",
+                    filter: { id: "NF-2026-001" },
+                    on_result: [
+                        {
+                            service: "mysql",
+                            database: "fnms",
+                            schema: "linhas_nota",
+                            alias: "linhas",
+                            filter: { nota_id: { nota: "id" } }
+                        },
+                        {
+                            service: "mysql",
+                            database: "fnms",
+                            schema: "cobrancas",
+                            alias: "cobrancas",
+                            filter: { nota_id: { nota: "id" } }
+                        },
+                        {
+                            service: "mysql",
+                            database: "fnms",
+                            schema: "pagamentos",
+                            alias: "pagamentos",
+                            filter: { nota_id: { nota: "id" } }
+                        }
+                    ]
+                }
+            },
+            caso7: {
+                desc: "Caso 7 (SMS Estoque): Busca o Galpão Central RJ 'G-1', seus Setores de armazenagem e os Produtos cadastrados.",
+                query: {
+                    service: "mysql",
+                    database: "sms",
+                    schema: "galpoes",
+                    alias: "galpao",
+                    filter: { id: "G-1" },
+                    on_result: [
+                        {
+                            service: "mysql",
+                            database: "sms",
+                            schema: "setores",
+                            alias: "setores",
+                            filter: { galpao_id: { galpao: "id" } }
+                        }
+                    ]
+                }
+            },
+            simples_mysql: {
+                desc: "Consulta simples no MySQL: lista todos os clientes cadastrados no CMS.",
+                query: {
+                    service: "mysql",
+                    database: "cms",
+                    schema: "clientes"
+                }
+            },
+            simples_mongo: {
+                desc: "Consulta simples no MongoDB: lista todos os pedidos do OMS.",
+                query: {
+                    service: "mongodb",
+                    database: "oms",
+                    schema: "pedidos"
+                }
+            },
+            simples_redis: {
+                desc: "Consulta simples no Redis: lista todas as chaves de rastreamento no DB 0.",
+                query: {
+                    service: "redis",
+                    database: "0"
+                }
+            }
+        };
+
+        function loadPreset() {
+            const select = document.getElementById('presetSelect');
+            const key = select.value;
+            if (!key || !PRESETS[key]) return;
+
+            const preset = PRESETS[key];
+            document.getElementById('presetDescription').textContent = preset.desc;
+            document.getElementById('query').value = JSON.stringify(preset.query, null, 2);
+            showToast('Cenário carregado no editor!');
+        }
+
+        function formatJsonEditor() {
+            const textarea = document.getElementById('query');
+            try {
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                showToast('JSON formatado com sucesso!');
+            } catch (e) {
+                alert('Erro de sintaxe no JSON: ' + e.message);
+            }
+        }
+
+        function copyEditorQuery() {
+            const text = document.getElementById('query').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Query copiada para a área de transferência!');
+            });
+        }
+
+        function clearEditor() {
+            document.getElementById('query').value = '';
+            document.getElementById('query').focus();
+        }
+
+        function copyResultJson() {
+            const text = document.getElementById('resultJson').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Resultado copiado para a área de transferência!');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
