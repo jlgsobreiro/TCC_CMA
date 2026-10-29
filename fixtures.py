@@ -1,3 +1,5 @@
+import pymysql
+
 from databases.databases_model import Databases, find_database
 from databases.mysql_model import MysqlClient
 
@@ -28,11 +30,20 @@ def setup_databases():
 
 def create_mysql_fixtures():
     db1 = find_database({'database_type': 'mysql'})
+    bootstrap = pymysql.connect(
+        host=db1.params.get('host', 'localhost'),
+        port=int(db1.params.get('port', 3306)),
+        user=db1.params.get('user', 'root'),
+        password=db1.params.get('password', 'rootpassword'),
+    )
+    with bootstrap:
+        with bootstrap.cursor() as cursor:
+            cursor.execute(f'CREATE DATABASE IF NOT EXISTS `{db1.database}`')
+        bootstrap.commit()
+
     mysql_client: MysqlClient = db1.get_connection()
     with mysql_client.connection as connection:
         with connection.cursor() as cursor:
-            cursor.execute('CREATE DATABASE IF NOT EXISTS test_db')
-            cursor.execute('USE test_db')
             cursor.execute('CREATE TABLE IF NOT EXISTS test (id VARCHAR(255), external_id VARCHAR(255))')
         connection.commit()
         mysql_client.insert_data({'id': '1', 'external_id': 'value'})
@@ -43,9 +54,9 @@ def create_mysql_fixtures():
 def create_redis_fixtures():
     db2 = find_database({'database_type': 'redis', 'database': '0'})
     redis_client = db2.get_connection()
-    redis_client.insert_data({'key': 'value'})
-    redis_client.insert_data({'key2': 'value2'})
-    redis_client.insert_data({'key3': 'value3'})
+    redis_client.insert_data({'id': '1', 'external_id': 'value'})
+    redis_client.insert_data({'id': '2', 'external_id': 'value2'})
+    redis_client.insert_data({'id': '3', 'external_id': 'value3'})
 
 
 def create_mongo_fixtures():

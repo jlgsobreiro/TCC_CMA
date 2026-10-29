@@ -109,8 +109,8 @@ class RedisClient(DBInterface):
 
 if __name__ == '__main__':
     redis_client = RedisClient(database=0, host="localhost", port=6379)
-    redis_client.insert_data({'key': 'value'})
-    redis_client.insert_data({'key2': 'value2'})
+    redis_client.insert_data({'id': 'key', 'external_id': 'value'})
+    redis_client.insert_data({'id': 'key2', 'external_id': 'value2'})
     print(redis_client.get_data())  # Should print all keys and their values as a list of dictionaries
     print(redis_client.get_data([{'key': 'value'}]))  # Should print [{'key': 'value'}]
     print(redis_client.get_data([{'key2': 'value'}]))  # Should print [{'key': 'value'}]

@@ -1,5 +1,3 @@
-from django.db.models.expressions import result
-
 from databases.database_interface import DBInterface
 from databases.databases_model import Databases
 
